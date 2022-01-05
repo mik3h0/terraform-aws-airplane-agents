@@ -10,7 +10,7 @@ resource "aws_ecs_cluster" "cluster" {
 
 resource "aws_iam_policy" "default_run_policy" {
   policy = jsonencode({
-    Version = "2021-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         Action = [
@@ -18,7 +18,7 @@ resource "aws_iam_policy" "default_run_policy" {
         ]
         Resource = join(":", ["arn:aws:secretsmanager", data.aws_region.current.name, data.aws_caller_identity.current.account_id, "secret:airplane/*"])
         Effect = "Allow"
-      }
+      },
     ]
   })
 }
@@ -39,7 +39,7 @@ resource "aws_iam_role" "default_run_role" {
   })
   managed_policy_arns = [
     "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
-    aws_iam_policy.default_run_policy.name
+    aws_iam_policy.default_run_policy.arn
   ]
 }
 
@@ -137,7 +137,7 @@ resource "aws_iam_role" "agent_execution_role" {
 }
 
 resource "aws_ecs_task_definition" "agent_task_def" {
-  family = "airplane/agent-task-def"
+  family = "airplane-agent-task-def"
   container_definitions = jsonencode([
     {
       name = "airplane-agent"
@@ -151,7 +151,7 @@ resource "aws_ecs_task_definition" "agent_task_def" {
         {name = "AP_DRIVER", value = "ecs"},
         {name = "AP_ECS_CLUSTER", value = var.cluster_arn == "" ? aws_ecs_cluster.cluster[0].arn : var.cluster_arn},
         {name = "AP_ECS_EXECUTION_ROLE", value = aws_iam_role.default_run_role.arn},
-        {name = "AP_ECS_LOG_GROUP", value = aws_cloudwatch_log_group.run_log_group.arn},
+        {name = "AP_ECS_LOG_GROUP", value = aws_cloudwatch_log_group.run_log_group.name},
         {name = "AP_ECS_SUBNETS", value = join(",", var.subnet_ids)},
         {name = "AP_LABELS", value = join(",", [for key, value in var.agent_labels : "${key}:${value}"])}, 
         {name = "AP_PARALLELISM", value = "50"},
@@ -161,7 +161,7 @@ resource "aws_ecs_task_definition" "agent_task_def" {
         logDriver = "awslogs"
         options = {
           "awslogs-region" = data.aws_region.current.name
-          "awslogs-group" = aws_cloudwatch_log_group.agent_log_group.arn
+          "awslogs-group" = aws_cloudwatch_log_group.agent_log_group.name
           "awslogs-stream-prefix" = "agent"
         }
       }
@@ -192,9 +192,9 @@ resource "aws_ecs_service" "agent_service" {
 }
 
 resource "aws_cloudwatch_log_group" "agent_log_group" {
-  name = "/airplane/agents"
+  name_prefix = "/airplane/agents"
 }
 
 resource "aws_cloudwatch_log_group" "run_log_group" {
-  name = "/airplane/runs"
+  name_prefix = "/airplane/runs"
 }
