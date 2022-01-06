@@ -1,4 +1,4 @@
-# terraform-ecs-airplane-cluster
+# terraform-aws-agents
 
 This terraform module creates an ECS cluster running Airplane agents.
 
