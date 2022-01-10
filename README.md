@@ -8,8 +8,8 @@ Use this module in your Terraform configuration:
 
 ```hcl
 module "airplane_agent" {
-  source = "airplanedev/airplane-cluster/ecs"
-  version = "~> 0.4.0"
+  source = "airplanedev/airplane-agents/aws"
+  version = "~> 0.1.0"
 
   api_token = "YOUR_API_TOKEN"
   team_id = "YOUR_TEAM_ID"
