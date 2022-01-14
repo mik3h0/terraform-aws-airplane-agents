@@ -18,6 +18,8 @@ resource "aws_security_group" "agent_security_group" {
     to_port = 0
     protocol = "-1"
   }
+
+  tags = var.tags
 }
 
 resource "aws_iam_policy" "default_run_policy" {
@@ -33,6 +35,8 @@ resource "aws_iam_policy" "default_run_policy" {
       },
     ]
   })
+
+  tags = var.tags
 }
 
 resource "aws_iam_role" "default_run_role" {
@@ -53,6 +57,8 @@ resource "aws_iam_role" "default_run_role" {
     "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
     aws_iam_policy.default_run_policy.arn
   ]
+
+  tags = var.tags
 }
 
 resource "aws_iam_role" "agent_role" {
@@ -115,6 +121,8 @@ resource "aws_iam_role" "agent_role" {
       }])
     })
   }
+
+  tags = var.tags
 }
 
 resource "aws_iam_role" "agent_execution_role" {
@@ -146,6 +154,8 @@ resource "aws_iam_role" "agent_execution_role" {
       ]
     })
   }
+
+  tags = var.tags
 }
 
 resource "aws_ecs_task_definition" "agent_task_def" {
@@ -190,6 +200,8 @@ resource "aws_ecs_task_definition" "agent_task_def" {
     operating_system_family = "LINUX"
   }
   requires_compatibilities = ["FARGATE"]
+
+  tags = var.tags
 }
 
 resource "aws_ecs_service" "agent_service" {
@@ -203,12 +215,19 @@ resource "aws_ecs_service" "agent_service" {
     subnets = var.subnet_ids
   }
   task_definition = aws_ecs_task_definition.agent_task_def.arn
+
+  propagate_tags = "SERVICE"
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "agent_log_group" {
   name_prefix = "/airplane/agents"
+
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "run_log_group" {
   name_prefix = "/airplane/runs"
+
+  tags = var.tags
 }

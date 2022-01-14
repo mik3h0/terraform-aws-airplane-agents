@@ -48,6 +48,12 @@ variable "service_name" {
   default = "airplane-agent"
 }
 
+variable "tags" {
+  type        = map(string)
+  description = "AWS tags to attach to resources"
+  default     = {}
+}
+
 variable "subnet_ids" {
   type = list(string)
   description = "List of subnet IDs for ECS service"
