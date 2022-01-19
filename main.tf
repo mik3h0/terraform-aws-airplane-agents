@@ -8,6 +8,18 @@ resource "aws_ecs_cluster" "cluster" {
   count = var.cluster_arn == "" ? 1 : 0
 }
 
+module "agent_security_group" {
+  source = "terraform-aws-modules/security-group/aws"
+
+  name        = "airplane-agent"
+  description = "Security group for Airplane agent"
+  vpc_id      = var.vpc_id
+
+  egress_rules = ["all-all"]
+
+  tags = var.tags
+}
+
 resource "aws_iam_policy" "default_run_policy" {
   policy = jsonencode({
     Version = "2012-10-17"
@@ -21,6 +33,8 @@ resource "aws_iam_policy" "default_run_policy" {
       },
     ]
   })
+
+  tags = var.tags
 }
 
 resource "aws_iam_role" "default_run_role" {
@@ -41,6 +55,8 @@ resource "aws_iam_role" "default_run_role" {
     "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
     aws_iam_policy.default_run_policy.arn
   ]
+
+  tags = var.tags
 }
 
 resource "aws_iam_role" "agent_role" {
@@ -103,6 +119,8 @@ resource "aws_iam_role" "agent_role" {
       }])
     })
   }
+
+  tags = var.tags
 }
 
 resource "aws_iam_role" "agent_execution_role" {
@@ -134,6 +152,8 @@ resource "aws_iam_role" "agent_execution_role" {
       ]
     })
   }
+
+  tags = var.tags
 }
 
 resource "aws_ecs_task_definition" "agent_task_def" {
@@ -152,6 +172,7 @@ resource "aws_ecs_task_definition" "agent_task_def" {
         {name = "AP_ECS_CLUSTER", value = var.cluster_arn == "" ? aws_ecs_cluster.cluster[0].arn : var.cluster_arn},
         {name = "AP_ECS_EXECUTION_ROLE", value = aws_iam_role.default_run_role.arn},
         {name = "AP_ECS_LOG_GROUP", value = aws_cloudwatch_log_group.run_log_group.name},
+        {name = "AP_ECS_SECURITY_GROUPS", value = module.agent_security_group.security_group_id},
         {name = "AP_ECS_SUBNETS", value = join(",", var.subnet_ids)},
         {name = "AP_LABELS", value = join(",", [for key, value in var.agent_labels : "${key}:${value}"])}, 
         {name = "AP_PARALLELISM", value = "50"},
@@ -177,6 +198,8 @@ resource "aws_ecs_task_definition" "agent_task_def" {
     operating_system_family = "LINUX"
   }
   requires_compatibilities = ["FARGATE"]
+
+  tags = var.tags
 }
 
 resource "aws_ecs_service" "agent_service" {
@@ -186,15 +209,23 @@ resource "aws_ecs_service" "agent_service" {
   launch_type = "FARGATE"
   network_configuration {
     assign_public_ip = true
+    security_groups = [module.agent_security_group.security_group_id]
     subnets = var.subnet_ids
   }
   task_definition = aws_ecs_task_definition.agent_task_def.arn
+
+  propagate_tags = "SERVICE"
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "agent_log_group" {
   name_prefix = "/airplane/agents"
+
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "run_log_group" {
   name_prefix = "/airplane/runs"
+
+  tags = var.tags
 }

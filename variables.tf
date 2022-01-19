@@ -48,8 +48,20 @@ variable "service_name" {
   default = "airplane-agent"
 }
 
+variable "tags" {
+  type        = map(string)
+  description = "AWS tags to attach to resources"
+  default     = {}
+}
+
 variable "subnet_ids" {
   type = list(string)
   description = "List of subnet IDs for ECS service"
   default = []
+}
+
+variable "vpc_id" {
+  type = string
+  description = "VPC to deploy to, should match subnet IDs"
+  default = ""
 }
