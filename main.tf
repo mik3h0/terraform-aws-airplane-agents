@@ -8,16 +8,14 @@ resource "aws_ecs_cluster" "cluster" {
   count = var.cluster_arn == "" ? 1 : 0
 }
 
-resource "aws_security_group" "agent_security_group" {
-  description = "Airplane agents"
-  vpc_id = var.vpc_id
-  egress {
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all egress"
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
-  }
+module "agent_security_group" {
+  source = "terraform-aws-modules/security-group/aws"
+
+  name        = "airplane-agent"
+  description = "Security group for Airplane agent"
+  vpc_id      = var.vpc_id
+
+  egress_rules = ["all-all"]
 
   tags = var.tags
 }
@@ -174,7 +172,7 @@ resource "aws_ecs_task_definition" "agent_task_def" {
         {name = "AP_ECS_CLUSTER", value = var.cluster_arn == "" ? aws_ecs_cluster.cluster[0].arn : var.cluster_arn},
         {name = "AP_ECS_EXECUTION_ROLE", value = aws_iam_role.default_run_role.arn},
         {name = "AP_ECS_LOG_GROUP", value = aws_cloudwatch_log_group.run_log_group.name},
-        {name = "AP_ECS_SECURITY_GROUPS", value = aws_security_group.agent_security_group.id},
+        {name = "AP_ECS_SECURITY_GROUPS", value = module.agent_security_group.security_group_id},
         {name = "AP_ECS_SUBNETS", value = join(",", var.subnet_ids)},
         {name = "AP_LABELS", value = join(",", [for key, value in var.agent_labels : "${key}:${value}"])}, 
         {name = "AP_PARALLELISM", value = "50"},
@@ -211,7 +209,7 @@ resource "aws_ecs_service" "agent_service" {
   launch_type = "FARGATE"
   network_configuration {
     assign_public_ip = true
-    security_groups = [aws_security_group.agent_security_group.id]
+    security_groups = [module.agent_security_group.security_group_id]
     subnets = var.subnet_ids
   }
   task_definition = aws_ecs_task_definition.agent_task_def.arn
