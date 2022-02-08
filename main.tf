@@ -188,8 +188,8 @@ resource "aws_ecs_task_definition" "agent_task_def" {
       }
     }
   ])
-  cpu = 256
-  memory = 512
+  cpu = var.agent_cpu
+  memory = var.agent_mem
   network_mode = "awsvpc"
   task_role_arn = aws_iam_role.agent_role.arn
   execution_role_arn = aws_iam_role.agent_execution_role.arn
@@ -205,7 +205,7 @@ resource "aws_ecs_task_definition" "agent_task_def" {
 resource "aws_ecs_service" "agent_service" {
   name = var.service_name
   cluster = var.cluster_arn == "" ? aws_ecs_cluster.cluster[0].arn : var.cluster_arn
-  desired_count = 3
+  desired_count = var.num_agents
   launch_type = "FARGATE"
   network_configuration {
     assign_public_ip = true

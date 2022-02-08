@@ -42,6 +42,24 @@ variable "agent_labels" {
   default     = {ecs: "true"}
 }
 
+variable "agent_cpu" {
+  type = number
+  description = "CPU per agent, in vCPU units"
+  default = 256
+}
+
+variable "agent_mem" {
+  type = number
+  description = "Memory per agent, in megabytes"
+  default = 512
+}
+
+variable "num_agents" {
+  type =  number
+  description = "Number of agent instances to run"
+  default = 3
+}
+
 variable "service_name" {
   type = string
   description = "Name to assign to ECS service"
