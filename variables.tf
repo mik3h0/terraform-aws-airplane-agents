@@ -86,12 +86,12 @@ variable "tags" {
 
 variable "subnet_ids" {
   type        = list(string)
-  description = "List of subnet IDs for ECS service"
+  description = "List of subnet IDs for ECS service. All subnets must be from the same VPC."
   default     = []
 }
 
-variable "vpc_id" {
-  type        = string
-  description = "VPC to deploy to, should match subnet IDs"
-  default     = ""
+variable "vpc_security_group_ids" {
+  type        = list(string)
+  description = "List of security group IDs to use. If not set, a new security group is created for the VPC containing the provided subnets."
+  default     = []
 }
