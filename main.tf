@@ -171,6 +171,9 @@ resource "aws_iam_role" "agent_execution_role" {
   tags = var.tags
 }
 
+resource "random_uuid" "lock_key" {
+}
+
 resource "aws_ecs_task_definition" "agent_task_def" {
   family = "airplane-agent-task-def"
   container_definitions = jsonencode([
@@ -195,7 +198,7 @@ resource "aws_ecs_task_definition" "agent_task_def" {
         { name = "AP_ENV_SLUG", value = var.env_slug },
         { name = "AP_LABELS", value = join(",", concat(["airplane_installer:terraform_ecs"], [for key, value in var.agent_labels : "${key}:${value}"])) },
         { name = "AP_TEAM_ID", value = var.team_id },
-        { name = "AP_LOCK_KEY", value = "fargate-${var.team_id}" },
+        { name = "AP_LOCK_KEY", value = "fargate-${random_uuid.lock_key.result}-${var.team_id}" },
       ]
       logConfiguration = {
         logDriver = "awslogs"
