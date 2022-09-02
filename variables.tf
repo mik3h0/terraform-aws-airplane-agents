@@ -13,7 +13,7 @@ variable "api_host" {
 
 variable "api_token" {
   type        = string
-  description = "Airplane API key - generate one via `airplane apikeys create`. EIther this or API Token Secret must be set"
+  description = "Airplane API key - generate one via `airplane apikeys create`. Either this or API Token Secret must be set"
   sensitive   = true
   default     = ""
 }
