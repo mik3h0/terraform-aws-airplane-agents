@@ -54,6 +54,12 @@ variable "agent_mem" {
   default     = 512
 }
 
+variable "debug_logging" {
+  type        = bool
+  description = "Enable debug logging in the agent and runners"
+  default     = false
+}
+
 variable "default_task_cpu" {
   type        = string
   description = "Default CPU for tasks, in millicores (e.g. 500m or 1000m)"
