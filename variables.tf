@@ -90,6 +90,12 @@ variable "tags" {
   default     = {}
 }
 
+variable "temporal_host" {
+  type        = string
+  description = "For development purposes."
+  default     = "temporal-api.airplane.dev:443"
+}
+
 variable "subnet_ids" {
   type        = list(string)
   description = "List of subnet IDs for ECS service. All subnets must be from the same VPC."

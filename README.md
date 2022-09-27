@@ -71,6 +71,7 @@ module "airplane_agent" {
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Name to assign to ECS service | `string` | `"airplane-agent"` | no |
 | <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | List of subnet IDs for ECS service. All subnets must be from the same VPC. | `list(string)` | `[]` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | AWS tags to attach to resources | `map(string)` | `{}` | no |
+| <a name="input_temporal_host"></a> [temporal\_host](#input\_temporal\_host) | For development purposes. | `string` | `"temporal-api.airplane.dev:443"` | no |
 | <a name="input_vpc_security_group_ids"></a> [vpc\_security\_group\_ids](#input\_vpc\_security\_group\_ids) | List of security group IDs to use. If not set, a new security group is created for the VPC containing the provided subnets. | `list(string)` | `[]` | no |
 
 ## Outputs
