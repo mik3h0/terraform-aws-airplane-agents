@@ -199,7 +199,7 @@ resource "aws_ecs_task_definition" "agent_task_def" {
         { name = "AP_ENV_SLUG", value = var.env_slug },
         { name = "AP_LABELS", value = join(" ", concat(["airplane_installer:terraform_ecs"], [for key, value in var.agent_labels : "${key}:${value}"])) },
         { name = "AP_TEAM_ID", value = var.team_id },
-        { name = "AP_TEMPORAL_HOST", value = var.temporal_host },
+        { name = "AP_RUNNER_TEMPORAL_HOST", value = var.temporal_host },
         { name = "AP_LOCK_KEY", value = "fargate-${random_uuid.lock_key.result}-${var.team_id}" },
       ]
       logConfiguration = {
