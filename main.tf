@@ -186,7 +186,7 @@ resource "aws_ecs_task_definition" "agent_task_def" {
         { name = "AP_API_TOKEN_SECRET_ARN", value = var.api_token_secret_arn },
         { name = "AP_AUTO_UPGRADE", value = "true" },
         { name = "AP_AGENT_IMAGE", value = "us-docker.pkg.dev/airplane-prod/public/agentv2:1" },
-        { name = "AP_DEBUG_LOGGING", value = var.debug_logging },
+        { name = "AP_DEBUG_LOGGING", value = tostring(var.debug_logging) },
         { name = "AP_DEFAULT_CPU", value = var.default_task_cpu },
         { name = "AP_DEFAULT_MEMORY", value = var.default_task_memory },
         { name = "AP_DRIVER", value = "ecs" },
