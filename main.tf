@@ -4,7 +4,13 @@ data "aws_caller_identity" "current" {}
 
 resource "aws_ecs_cluster" "cluster" {
   name               = "airplane-ecs-cluster"
+  count              = var.cluster_arn == "" ? 1 : 0
+}
+
+resource "aws_ecs_cluster_capacity_providers" "cluster" {
+  cluster_name = aws_ecs_cluster.cluster[0].name
   capacity_providers = ["FARGATE"]
+
   count              = var.cluster_arn == "" ? 1 : 0
 }
 
@@ -51,11 +57,10 @@ resource "aws_iam_policy" "default_run_policy" {
 
 resource "aws_iam_role" "default_run_role" {
   assume_role_policy = jsonencode({
+    Version = "2008-10-17"
     Statement = [
       {
-        Action = [
-          "sts:AssumeRole"
-        ]
+        Action = "sts:AssumeRole"
         Principal = {
           Service = "ecs-tasks.amazonaws.com"
         }
@@ -73,11 +78,10 @@ resource "aws_iam_role" "default_run_role" {
 
 resource "aws_iam_role" "agent_role" {
   assume_role_policy = jsonencode({
+    Version = "2008-10-17"
     Statement = [
       {
-        Action = [
-          "sts:AssumeRole"
-        ]
+        Action = "sts:AssumeRole"
         Principal = {
           Service = "ecs-tasks.amazonaws.com"
         }
@@ -140,11 +144,10 @@ resource "aws_iam_role" "agent_role" {
 
 resource "aws_iam_role" "agent_execution_role" {
   assume_role_policy = jsonencode({
+    Version = "2008-10-17"
     Statement = [
       {
-        Action = [
-          "sts:AssumeRole"
-        ]
+        Action = "sts:AssumeRole"
         Principal = {
           Service = "ecs-tasks.amazonaws.com"
         }
