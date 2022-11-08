@@ -33,11 +33,6 @@ module "agent_security_group" {
   tags = var.tags
 }
 
-output "agent_security_group_ids" {
-  value = [for sg in module.agent_security_group : sg.security_group_id]
-  description = "IDs of created security groups, if any"
-}
-
 resource "aws_iam_policy" "default_run_policy" {
   policy = jsonencode({
     Version = "2012-10-17"

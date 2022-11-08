@@ -79,5 +79,7 @@ module "airplane_agent" {
 
 | Name | Description |
 |------|-------------|
+| <a name="output_agent_role_arn"></a> [agent\_role\_arn](#output\_agent\_role\_arn) | ARN of IAM role used for agent |
 | <a name="output_agent_security_group_ids"></a> [agent\_security\_group\_ids](#output\_agent\_security\_group\_ids) | IDs of created security groups, if any |
+| <a name="output_task_execution_role_arn"></a> [task\_execution\_role\_arn](#output\_task\_execution\_role\_arn) | ARN of IAM role used for task runs created by agent |
 <!-- END_TF_DOCS -->
