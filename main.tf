@@ -3,20 +3,20 @@ data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
 resource "aws_ecs_cluster" "cluster" {
-  name               = "airplane-ecs-cluster"
-  count              = var.cluster_arn == "" ? 1 : 0
+  name  = "airplane-ecs-cluster"
+  count = var.cluster_arn == "" ? 1 : 0
 }
 
 resource "aws_ecs_cluster_capacity_providers" "cluster" {
-  cluster_name = aws_ecs_cluster.cluster[0].name
+  cluster_name       = aws_ecs_cluster.cluster[0].name
   capacity_providers = ["FARGATE"]
 
-  count              = var.cluster_arn == "" ? 1 : 0
+  count = var.cluster_arn == "" ? 1 : 0
 }
 
 data "aws_subnet" "selected" {
   count = length(var.subnet_ids)
-  id = var.subnet_ids[count.index]
+  id    = var.subnet_ids[count.index]
 }
 
 module "agent_security_group" {
@@ -33,7 +33,14 @@ module "agent_security_group" {
   tags = var.tags
 }
 
+output "agent_security_group_ids" {
+  value       = [for sg in module.agent_security_group : sg.security_group_id]
+  description = "IDs of created security groups, if any"
+}
+
 resource "aws_iam_policy" "default_run_policy" {
+  path = "/airplane/"
+  name = "DefaultRunRolePolicy"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -44,6 +51,14 @@ resource "aws_iam_policy" "default_run_policy" {
         Resource = join(":", ["arn:aws:secretsmanager", data.aws_region.current.name, data.aws_caller_identity.current.account_id, "secret:airplane/*"])
         Effect   = "Allow"
       },
+      {
+          Action = [
+            "logs:CreateLogStream",
+            "logs:PutLogEvents",
+          ]
+          Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${resource.aws_cloudwatch_log_group.run_log_group.name}:*"
+          Effect   = "Allow"
+        }
     ]
   })
 
@@ -51,6 +66,30 @@ resource "aws_iam_policy" "default_run_policy" {
 }
 
 resource "aws_iam_role" "default_run_role" {
+  path = "/airplane/"
+  name = "DefaultRunRole"
+  assume_role_policy = jsonencode({
+    Version = "2008-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+        Effect = "Allow"
+      }
+    ]
+  })
+  managed_policy_arns = [
+    aws_iam_policy.default_run_policy.arn
+  ]
+
+  tags = var.tags
+}
+
+resource "aws_iam_role" "run_execution_role" {
+  path = "/airplane/"
+  name = "RunExecutionRole"
   assume_role_policy = jsonencode({
     Version = "2008-10-17"
     Statement = [
@@ -72,6 +111,8 @@ resource "aws_iam_role" "default_run_role" {
 }
 
 resource "aws_iam_role" "agent_role" {
+  path = "/airplane/"
+  name = "AgentTaskRole"
   assume_role_policy = jsonencode({
     Version = "2008-10-17"
     Statement = [
@@ -85,24 +126,62 @@ resource "aws_iam_role" "agent_role" {
     ]
   })
   inline_policy {
-    name = "airplane-agent-policy"
+    name = "AgentTaskRolePolicy"
     policy = jsonencode({
       Statement = concat([
         {
           Action = [
+            "ecs:RunTask",
+          ]
+          Resource = "arn:aws:ecs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:task-definition/airplane-agentv2-*"
+          Effect = "Allow"
+        },
+        {
+          Action = [
             "ecs:DescribeTasks",
+            "ecs:ListTasks",
+          ]
+          Resource = "*"
+          Condition = {
+            ArnEquals = {
+              "ecs:cluster" = var.cluster_arn == "" ? aws_ecs_cluster.cluster[0].arn : var.cluster_arn
+            }
+          }
+          Effect   = "Allow"
+        },
+        {
+          Action = [
             "ecs:RegisterTaskDefinition",
             "ecs:DeregisterTaskDefinition",
-            "ecs:ListTasks",
             "ecs:ListTaskDefinitions",
-            "ecs:RunTask",
             "ecs:TagResource",
-            "iam:PassRole",
-            "logs:GetLogEvents",
             "secretsmanager:ListSecrets",
-          ],
+          ]
           Resource = "*"
           Effect   = "Allow"
+        },
+        {
+          Action = [
+            "logs:GetLogEvents",
+          ]
+          Resource = [
+            "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${resource.aws_cloudwatch_log_group.run_log_group.name}:log-stream:*",
+            "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${resource.aws_cloudwatch_log_group.agent_log_group.name}:log-stream:*",
+          ]
+          Effect   = "Allow"
+        },
+        {
+          Action = [
+            "iam:PassRole",
+          ]
+          Resource = concat(
+            [
+              aws_iam_role.default_run_role.arn,
+              aws_iam_role.run_execution_role.arn,
+            ],
+            var.allowed_iam_roles
+          )
+          Effect = "Allow"
         },
         {
           Action = [
@@ -138,6 +217,8 @@ resource "aws_iam_role" "agent_role" {
 }
 
 resource "aws_iam_role" "agent_execution_role" {
+  path = "/airplane/"
+  name = "AgentTaskExecutionRole"
   assume_role_policy = jsonencode({
     Version = "2008-10-17"
     Statement = [
@@ -151,7 +232,7 @@ resource "aws_iam_role" "agent_execution_role" {
     ]
   })
   inline_policy {
-    name = "airplane-agent-policy"
+    name = "AgentTaskExecutionRolePolicy"
     policy = jsonencode({
       Statement = [
         {
@@ -159,7 +240,7 @@ resource "aws_iam_role" "agent_execution_role" {
             "logs:CreateLogStream",
             "logs:PutLogEvents",
           ]
-          Resource = "*"
+          Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${resource.aws_cloudwatch_log_group.agent_log_group.name}:*"
           Effect   = "Allow"
         }
       ]
@@ -189,7 +270,8 @@ resource "aws_ecs_task_definition" "agent_task_def" {
         { name = "AP_DEFAULT_MEMORY", value = var.default_task_memory },
         { name = "AP_DRIVER", value = "ecs" },
         { name = "AP_ECS_CLUSTER", value = var.cluster_arn == "" ? aws_ecs_cluster.cluster[0].arn : var.cluster_arn },
-        { name = "AP_ECS_EXECUTION_ROLE", value = aws_iam_role.default_run_role.arn },
+        { name = "AP_ECS_EXECUTION_ROLE", value = aws_iam_role.run_execution_role.arn },
+        { name = "AP_ECS_TASK_ROLE", value = aws_iam_role.default_run_role.arn },
         { name = "AP_ECS_LOG_GROUP", value = aws_cloudwatch_log_group.run_log_group.name },
         { name = "AP_ECS_REGION", value = data.aws_region.current.name },
         { name = "AP_ECS_SECURITY_GROUPS", value = length(var.vpc_security_group_ids) > 0 ? join(",", var.vpc_security_group_ids) : join(",", [for sg in module.agent_security_group : sg.security_group_id]) },

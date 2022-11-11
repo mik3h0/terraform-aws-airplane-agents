@@ -109,7 +109,13 @@ variable "vpc_security_group_ids" {
 }
 
 variable "env_slug" {
-  type = string
+  type        = string
   description = "Slug for environment. Leave blank to let agent execute on all environments."
-  default = ""
+  default     = ""
+}
+
+variable "allowed_iam_roles" {
+  type = list(string)
+  description = "List of additional allowed IAM roles that tasks are allowed to assume"
+  default = []
 }
