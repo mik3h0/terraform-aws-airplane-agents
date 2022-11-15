@@ -119,3 +119,9 @@ variable "allowed_iam_roles" {
   description = "List of additional allowed IAM roles that tasks are allowed to assume"
   default = []
 }
+
+variable "private_repositories" {
+  type = list(string)
+  description = "List of private repositories for Docker image tasks"
+  default = []
+}

@@ -3,7 +3,7 @@ data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
 resource "aws_ecs_cluster" "cluster" {
-  name  = "airplane-ecs-cluster"
+  name  = "airplane-${resource.random_uuid.cluster_name_suffix.result}"
   count = var.cluster_arn == "" ? 1 : 0
 }
 
@@ -31,11 +31,6 @@ module "agent_security_group" {
   egress_rules = ["all-all"]
 
   tags = var.tags
-}
-
-output "agent_security_group_ids" {
-  value       = [for sg in module.agent_security_group : sg.security_group_id]
-  description = "IDs of created security groups, if any"
 }
 
 resource "aws_iam_policy" "default_run_policy" {
@@ -181,6 +176,14 @@ resource "aws_iam_role" "agent_role" {
             ],
             var.allowed_iam_roles
           )
+          Condition = {
+            StringEquals = {
+              "iam:PassedToService" = "ecs-tasks.amazonaws.com"
+            }
+            StringLike = {
+              "iam:AssociatedResourceARN" = "arn:aws:ecs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:task-definition/airplane-*"
+            }
+          }
           Effect = "Allow"
         },
         {
@@ -196,6 +199,13 @@ resource "aws_iam_role" "agent_role" {
           Effect   = "Allow"
         },
         ],
+        length(var.private_repositories) == 0 ? [] : [{
+          Action   = [
+            "ecr:BatchGetImage",
+          ]
+          Resource = var.private_repositories
+          Effect   = "Allow"
+        }],
         var.api_token_secret_arn == "" ? [] : [{
           Action = [
             "secretsmanager:GetSecretValue"
@@ -251,6 +261,9 @@ resource "aws_iam_role" "agent_execution_role" {
 }
 
 resource "random_uuid" "lock_key" {
+}
+
+resource "random_uuid" "cluster_name_suffix" {
 }
 
 resource "aws_ecs_task_definition" "agent_task_def" {
