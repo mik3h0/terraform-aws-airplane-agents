@@ -201,6 +201,7 @@ resource "aws_iam_role" "agent_role" {
         ],
         length(var.private_repositories) == 0 ? [] : [{
           Action   = [
+            "ecr:GetAuthorizationToken",
             "ecr:BatchGetImage",
           ]
           Resource = var.private_repositories
