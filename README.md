@@ -58,6 +58,7 @@ module "airplane_agent" {
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_team_id"></a> [team\_id](#input\_team\_id) | Airplane team ID - retrieve via `airplane auth info`. | `string` | n/a | yes |
+| <a name="input_additional_run_policy_arns"></a> [additional\_run\_policy\_arns](#input\_additional\_run\_policy\_arns) | List of additional IAM policies to attach to the default run role | `list(string)` | `[]` | no |
 | <a name="input_agent_cpu"></a> [agent\_cpu](#input\_agent\_cpu) | CPU per agent, in vCPU units | `number` | `256` | no |
 | <a name="input_agent_labels"></a> [agent\_labels](#input\_agent\_labels) | Map of label key/values to attach to agents. Labels can be used to constrain where tasks execute. | `map(string)` | <pre>{<br>  "ecs": "true"<br>}</pre> | no |
 | <a name="input_agent_mem"></a> [agent\_mem](#input\_agent\_mem) | Memory per agent, in megabytes | `number` | `512` | no |

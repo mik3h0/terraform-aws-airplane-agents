@@ -75,9 +75,12 @@ resource "aws_iam_role" "default_run_role" {
       }
     ]
   })
-  managed_policy_arns = [
-    aws_iam_policy.default_run_policy.arn
-  ]
+  managed_policy_arns = concat(
+    [
+      aws_iam_policy.default_run_policy.arn
+    ],
+    var.additional_run_policy_arns
+  )
 
   tags = var.tags
 }

@@ -125,3 +125,9 @@ variable "private_repositories" {
   description = "List of private repositories for Docker image tasks"
   default = []
 }
+
+variable "additional_run_policy_arns" {
+  type = list(string)
+  description = "List of additional IAM policies to attach to the default run role"
+  default = []
+}
