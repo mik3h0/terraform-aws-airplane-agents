@@ -204,10 +204,18 @@ resource "aws_iam_role" "agent_role" {
         ],
         length(var.private_repositories) == 0 ? [] : [{
           Action   = [
-            "ecr:GetAuthorizationToken",
+            "ecr:BatchCheckLayerAvailability",
             "ecr:BatchGetImage",
+            "ecr:GetDownloadUrlForLayer",
           ]
           Resource = var.private_repositories
+          Effect   = "Allow"
+        },
+        {
+          Action   = [
+            "ecr:GetAuthorizationToken",
+          ]
+          Resource = ["*"]
           Effect   = "Allow"
         }],
         var.api_token_secret_arn == "" ? [] : [{
