@@ -115,19 +115,25 @@ variable "env_slug" {
 }
 
 variable "allowed_iam_roles" {
-  type = list(string)
+  type        = list(string)
   description = "List of additional allowed IAM roles that tasks are allowed to assume"
-  default = []
+  default     = []
 }
 
 variable "private_repositories" {
-  type = list(string)
+  type        = list(string)
   description = "List of private repositories for Docker image tasks"
-  default = []
+  default     = []
+}
+
+variable "use_ecr_public_images" {
+  type        = bool
+  description = "Use ECR-based public images for task runs"
+  default     = true
 }
 
 variable "additional_run_policy_arns" {
-  type = list(string)
+  type        = list(string)
   description = "List of additional IAM policies to attach to the default run role"
-  default = []
+  default     = []
 }

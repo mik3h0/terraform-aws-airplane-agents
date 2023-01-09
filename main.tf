@@ -47,13 +47,22 @@ resource "aws_iam_policy" "default_run_policy" {
         Effect   = "Allow"
       },
       {
-          Action = [
-            "logs:CreateLogStream",
-            "logs:PutLogEvents",
-          ]
-          Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${resource.aws_cloudwatch_log_group.run_log_group.name}:*"
-          Effect   = "Allow"
-        }
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+        ]
+        Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${resource.aws_cloudwatch_log_group.run_log_group.name}:*"
+        Effect   = "Allow"
+      },
+      # Support pulling public ECR images with authentication
+      {
+        Action = [
+          "ecr-public:GetAuthorizationToken",
+          "sts:GetServiceBearerToken",
+        ]
+        Resource = "*"
+        Effect   = "Allow"
+      },
     ]
   })
 
@@ -72,7 +81,7 @@ resource "aws_iam_role" "default_run_role" {
           Service = "ecs-tasks.amazonaws.com"
         }
         Effect = "Allow"
-      }
+      },
     ]
   })
   managed_policy_arns = concat(
@@ -97,7 +106,7 @@ resource "aws_iam_role" "run_execution_role" {
           Service = "ecs-tasks.amazonaws.com"
         }
         Effect = "Allow"
-      }
+      },
     ]
   })
   managed_policy_arns = [
@@ -132,7 +141,7 @@ resource "aws_iam_role" "agent_role" {
             "ecs:RunTask",
           ]
           Resource = "arn:aws:ecs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:task-definition/airplane-agentv2-*"
-          Effect = "Allow"
+          Effect   = "Allow"
         },
         {
           Action = [
@@ -145,7 +154,7 @@ resource "aws_iam_role" "agent_role" {
               "ecs:cluster" = var.cluster_arn == "" ? aws_ecs_cluster.cluster[0].arn : var.cluster_arn
             }
           }
-          Effect   = "Allow"
+          Effect = "Allow"
         },
         {
           Action = [
@@ -166,7 +175,7 @@ resource "aws_iam_role" "agent_role" {
             "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${resource.aws_cloudwatch_log_group.run_log_group.name}:log-stream:*",
             "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${resource.aws_cloudwatch_log_group.agent_log_group.name}:log-stream:*",
           ]
-          Effect   = "Allow"
+          Effect = "Allow"
         },
         {
           Action = [
@@ -201,22 +210,31 @@ resource "aws_iam_role" "agent_role" {
           Resource = join(":", ["arn:aws:secretsmanager", data.aws_region.current.name, data.aws_caller_identity.current.account_id, "secret:airplane/*"])
           Effect   = "Allow"
         },
+        # Support pulling public ECR images with authentication
+        {
+          Action = [
+            "ecr-public:GetAuthorizationToken",
+            "sts:GetServiceBearerToken",
+          ]
+          Resource = "*"
+          Effect   = "Allow"
+        },
         ],
         length(var.private_repositories) == 0 ? [] : [{
-          Action   = [
+          Action = [
             "ecr:BatchCheckLayerAvailability",
             "ecr:BatchGetImage",
             "ecr:GetDownloadUrlForLayer",
           ]
           Resource = var.private_repositories
           Effect   = "Allow"
-        },
-        {
-          Action   = [
-            "ecr:GetAuthorizationToken",
-          ]
-          Resource = ["*"]
-          Effect   = "Allow"
+          },
+          {
+            Action = [
+              "ecr:GetAuthorizationToken",
+            ]
+            Resource = ["*"]
+            Effect   = "Allow"
         }],
         var.api_token_secret_arn == "" ? [] : [{
           Action = [
@@ -264,7 +282,16 @@ resource "aws_iam_role" "agent_execution_role" {
           ]
           Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${resource.aws_cloudwatch_log_group.agent_log_group.name}:*"
           Effect   = "Allow"
-        }
+        },
+        # Support pulling public ECR images with authentication
+        {
+          Action = [
+            "ecr-public:GetAuthorizationToken",
+            "sts:GetServiceBearerToken",
+          ]
+          Resource = "*"
+          Effect   = "Allow"
+        },
       ]
     })
   }
@@ -283,13 +310,13 @@ resource "aws_ecs_task_definition" "agent_task_def" {
   container_definitions = jsonencode([
     {
       name  = "airplane-agent"
-      image = "us-docker.pkg.dev/airplane-prod/public/agentv2:1"
+      image = "public.ecr.aws/airplanedev-prod/agentv2:1"
       environment = [
         { name = "AP_API_HOST", value = var.api_host },
         { name = "AP_API_TOKEN", value = var.api_token },
         { name = "AP_API_TOKEN_SECRET_ARN", value = var.api_token_secret_arn },
         { name = "AP_AUTO_UPGRADE", value = "true" },
-        { name = "AP_AGENT_IMAGE", value = "us-docker.pkg.dev/airplane-prod/public/agentv2:1" },
+        { name = "AP_AGENT_IMAGE", value = "public.ecr.aws/airplanedev-prod/agentv2:1" },
         { name = "AP_DEBUG_LOGGING", value = tostring(var.debug_logging) },
         { name = "AP_DEFAULT_CPU", value = var.default_task_cpu },
         { name = "AP_DEFAULT_MEMORY", value = var.default_task_memory },
@@ -306,6 +333,7 @@ resource "aws_ecs_task_definition" "agent_task_def" {
         { name = "AP_TEAM_ID", value = var.team_id },
         { name = "AP_RUNNER_TEMPORAL_HOST", value = var.temporal_host },
         { name = "AP_LOCK_KEY", value = "fargate-${random_uuid.lock_key.result}-${var.team_id}" },
+        { name = "AP_USE_ECR_PUBLIC_IMAGES", value = tostring(var.use_ecr_public_images) },
       ]
       logConfiguration = {
         logDriver = "awslogs"
