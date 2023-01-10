@@ -2,8 +2,12 @@ data "aws_region" "current" {}
 
 data "aws_caller_identity" "current" {}
 
+locals {
+  full_name_suffix = var.name_suffix == "" ? "" : "-${var.name_suffix}"
+}
+
 resource "aws_ecs_cluster" "cluster" {
-  name  = "airplane-${resource.random_uuid.cluster_name_suffix.result}"
+  name  = "airplane-${var.name_suffix == "" ? resource.random_uuid.cluster_name_suffix.result : var.name_suffix}"
   count = var.cluster_arn == "" ? 1 : 0
 }
 
@@ -24,7 +28,7 @@ module "agent_security_group" {
 
   count = length(var.vpc_security_group_ids) > 0 ? 0 : 1
 
-  name        = "airplane-agent"
+  name        = "airplane-agent${local.full_name_suffix}"
   description = "Security group for Airplane agent"
   vpc_id      = data.aws_subnet.selected[0].vpc_id
 
@@ -35,7 +39,7 @@ module "agent_security_group" {
 
 resource "aws_iam_policy" "default_run_policy" {
   path = "/airplane/"
-  name = "DefaultRunRolePolicy"
+  name = "DefaultRunRolePolicy${local.full_name_suffix}"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -71,7 +75,7 @@ resource "aws_iam_policy" "default_run_policy" {
 
 resource "aws_iam_role" "default_run_role" {
   path = "/airplane/"
-  name = "DefaultRunRole"
+  name = "DefaultRunRole${local.full_name_suffix}"
   assume_role_policy = jsonencode({
     Version = "2008-10-17"
     Statement = [
@@ -96,7 +100,7 @@ resource "aws_iam_role" "default_run_role" {
 
 resource "aws_iam_role" "run_execution_role" {
   path = "/airplane/"
-  name = "RunExecutionRole"
+  name = "RunExecutionRole${local.full_name_suffix}"
   assume_role_policy = jsonencode({
     Version = "2008-10-17"
     Statement = [
@@ -119,7 +123,7 @@ resource "aws_iam_role" "run_execution_role" {
 
 resource "aws_iam_role" "agent_role" {
   path = "/airplane/"
-  name = "AgentTaskRole"
+  name = "AgentTaskRole${local.full_name_suffix}"
   assume_role_policy = jsonencode({
     Version = "2008-10-17"
     Statement = [
@@ -258,7 +262,7 @@ resource "aws_iam_role" "agent_role" {
 
 resource "aws_iam_role" "agent_execution_role" {
   path = "/airplane/"
-  name = "AgentTaskExecutionRole"
+  name = "AgentTaskExecutionRole${local.full_name_suffix}"
   assume_role_policy = jsonencode({
     Version = "2008-10-17"
     Statement = [
@@ -376,13 +380,13 @@ resource "aws_ecs_service" "agent_service" {
 }
 
 resource "aws_cloudwatch_log_group" "agent_log_group" {
-  name_prefix = "/airplane/agents"
+  name_prefix = "/airplane/agents${local.full_name_suffix}"
 
   tags = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "run_log_group" {
-  name_prefix = "/airplane/runs"
+  name_prefix = "/airplane/runs${local.full_name_suffix}"
 
   tags = var.tags
 }

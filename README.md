@@ -72,6 +72,7 @@ module "airplane_agent" {
 | <a name="input_default_task_cpu"></a> [default\_task\_cpu](#input\_default\_task\_cpu) | Default CPU for tasks, in millicores (e.g. 500m or 1000m) | `string` | `"1000m"` | no |
 | <a name="input_default_task_memory"></a> [default\_task\_memory](#input\_default\_task\_memory) | Default memory for tasks (e.g. 500Mi or 2Gi) | `string` | `"1Gi"` | no |
 | <a name="input_env_slug"></a> [env\_slug](#input\_env\_slug) | Slug for environment. Leave blank to let agent execute on all environments. | `string` | `""` | no |
+| <a name="input_name_suffix"></a> [name\_suffix](#input\_name\_suffix) | A custom suffix to add to all generated names; a dash is automatically added, so there is no need to include that if set. | `string` | `""` | no |
 | <a name="input_num_agents"></a> [num\_agents](#input\_num\_agents) | Number of agent instances to run | `number` | `3` | no |
 | <a name="input_private_repositories"></a> [private\_repositories](#input\_private\_repositories) | List of private repositories for Docker image tasks | `list(string)` | `[]` | no |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Name to assign to ECS service | `string` | `"airplane-agent"` | no |

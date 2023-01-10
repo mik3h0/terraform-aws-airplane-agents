@@ -1,0 +1,19 @@
+name: format
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Run Terraform fmt
+        id: fmt
+        run: terraform fmt -check -recursive .

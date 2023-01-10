@@ -5,6 +5,18 @@ variable "team_id" {
 }
 
 // Optional variables.
+variable "additional_run_policy_arns" {
+  type        = list(string)
+  description = "List of additional IAM policies to attach to the default run role"
+  default     = []
+}
+
+variable "allowed_iam_roles" {
+  type        = list(string)
+  description = "List of additional allowed IAM roles that tasks are allowed to assume"
+  default     = []
+}
+
 variable "api_host" {
   type        = string
   description = "For development purposes."
@@ -72,16 +84,40 @@ variable "default_task_memory" {
   default     = "1Gi"
 }
 
+variable "env_slug" {
+  type        = string
+  description = "Slug for environment. Leave blank to let agent execute on all environments."
+  default     = ""
+}
+
+variable "name_suffix" {
+  type        = string
+  description = "A custom suffix to add to all generated names; a dash is automatically added, so there is no need to include that if set."
+  default     = ""
+}
+
 variable "num_agents" {
   type        = number
   description = "Number of agent instances to run"
   default     = 3
 }
 
+variable "private_repositories" {
+  type        = list(string)
+  description = "List of private repositories for Docker image tasks"
+  default     = []
+}
+
 variable "service_name" {
   type        = string
   description = "Name to assign to ECS service"
   default     = "airplane-agent"
+}
+
+variable "subnet_ids" {
+  type        = list(string)
+  description = "List of subnet IDs for ECS service. All subnets must be from the same VPC."
+  default     = []
 }
 
 variable "tags" {
@@ -96,35 +132,6 @@ variable "temporal_host" {
   default     = "temporal-api.airplane.dev:443"
 }
 
-variable "subnet_ids" {
-  type        = list(string)
-  description = "List of subnet IDs for ECS service. All subnets must be from the same VPC."
-  default     = []
-}
-
-variable "vpc_security_group_ids" {
-  type        = list(string)
-  description = "List of security group IDs to use. If not set, a new security group is created for the VPC containing the provided subnets."
-  default     = []
-}
-
-variable "env_slug" {
-  type        = string
-  description = "Slug for environment. Leave blank to let agent execute on all environments."
-  default     = ""
-}
-
-variable "allowed_iam_roles" {
-  type        = list(string)
-  description = "List of additional allowed IAM roles that tasks are allowed to assume"
-  default     = []
-}
-
-variable "private_repositories" {
-  type        = list(string)
-  description = "List of private repositories for Docker image tasks"
-  default     = []
-}
 
 variable "use_ecr_public_images" {
   type        = bool
@@ -132,8 +139,8 @@ variable "use_ecr_public_images" {
   default     = true
 }
 
-variable "additional_run_policy_arns" {
+variable "vpc_security_group_ids" {
   type        = list(string)
-  description = "List of additional IAM policies to attach to the default run role"
+  description = "List of security group IDs to use. If not set, a new security group is created for the VPC containing the provided subnets."
   default     = []
 }
