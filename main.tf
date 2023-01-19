@@ -369,7 +369,7 @@ resource "aws_ecs_service" "agent_service" {
   desired_count = var.num_agents
   launch_type   = "FARGATE"
   network_configuration {
-    assign_public_ip = true
+    assign_public_ip = var.assign_public_agent_ip
     security_groups  = length(var.vpc_security_group_ids) > 0 ? toset(var.vpc_security_group_ids) : toset([for sg in module.agent_security_group : sg.security_group_id])
     subnets          = var.subnet_ids
   }

@@ -42,6 +42,12 @@ variable "api_token_secret_kms_key_arn" {
   default     = ""
 }
 
+variable "assign_public_agent_ip" {
+  type        = bool
+  description = "If enabled, assigns a public IP address to the agent service. If disabled, the subnet used by the agent must be configured with a NAT gateway to enable internet access."
+  default     = true
+}
+
 variable "cluster_arn" {
   type        = string
   description = "Your ECS cluster ARN. Leave blank to create a new cluster."
