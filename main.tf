@@ -310,7 +310,7 @@ resource "random_uuid" "cluster_name_suffix" {
 }
 
 resource "aws_ecs_task_definition" "agent_task_def" {
-  family = "airplane-agent-task-def"
+  family = "airplane-agent-task-def${local.full_name_suffix}"
   container_definitions = jsonencode([
     {
       name  = "airplane-agent"
@@ -364,7 +364,7 @@ resource "aws_ecs_task_definition" "agent_task_def" {
 }
 
 resource "aws_ecs_service" "agent_service" {
-  name          = var.service_name
+  name          = "${var.service_name}${local.full_name_suffix}"
   cluster       = var.cluster_arn == "" ? aws_ecs_cluster.cluster[0].arn : var.cluster_arn
   desired_count = var.num_agents
   launch_type   = "FARGATE"
