@@ -23,18 +23,51 @@ data "aws_subnet" "selected" {
   id    = var.subnet_ids[count.index]
 }
 
-module "agent_security_group" {
-  source = "terraform-aws-modules/security-group/aws"
-
-  count = length(var.vpc_security_group_ids) > 0 ? 0 : 1
-
+resource "aws_security_group" "agent_security_group" {
   name        = "airplane-agent${local.full_name_suffix}"
   description = "Security group for Airplane agent"
   vpc_id      = data.aws_subnet.selected[0].vpc_id
+  tags = {
+    "Name" : "airplane-agent${local.full_name_suffix}",
+  }
 
-  egress_rules = ["all-all"]
+  count = length(var.vpc_security_group_ids) > 0 ? 0 : 1
+}
 
-  tags = var.tags
+resource "aws_security_group_rule" "agent_egress_rule" {
+  type              = "egress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  ipv6_cidr_blocks  = ["::/0"]
+  security_group_id = aws_security_group.agent_security_group[0].id
+
+  count = length(var.vpc_security_group_ids) > 0 ? 0 : 1
+}
+
+resource "aws_security_group" "tasks_security_group" {
+  name        = "airplane-tasks${local.full_name_suffix}"
+  description = "Security group for Airplane runner tasks"
+  vpc_id      = data.aws_subnet.selected[0].vpc_id
+  tags = {
+    "Name" : "airplane-tasks${local.full_name_suffix}",
+  }
+
+
+  count = length(var.vpc_security_group_ids) > 0 ? 0 : 1
+}
+
+resource "aws_security_group_rule" "tasks_egress_rule" {
+  type              = "egress"
+  protocol          = "all"
+  from_port         = -1
+  to_port           = -1
+  cidr_blocks       = ["0.0.0.0/0"]
+  ipv6_cidr_blocks  = ["::/0"]
+  security_group_id = aws_security_group.tasks_security_group[0].id
+
+  count = length(var.vpc_security_group_ids) > 0 ? 0 : 1
 }
 
 resource "aws_iam_policy" "default_run_policy" {
@@ -330,7 +363,7 @@ resource "aws_ecs_task_definition" "agent_task_def" {
         { name = "AP_ECS_TASK_ROLE", value = aws_iam_role.default_run_role.arn },
         { name = "AP_ECS_LOG_GROUP", value = aws_cloudwatch_log_group.run_log_group.name },
         { name = "AP_ECS_REGION", value = data.aws_region.current.name },
-        { name = "AP_ECS_SECURITY_GROUPS", value = length(var.vpc_security_group_ids) > 0 ? join(",", var.vpc_security_group_ids) : join(",", [for sg in module.agent_security_group : sg.security_group_id]) },
+        { name = "AP_ECS_SECURITY_GROUPS", value = length(var.vpc_security_group_ids) > 0 ? join(",", var.vpc_security_group_ids) : join(",", [for sg in aws_security_group.tasks_security_group : sg.id]) },
         { name = "AP_ECS_SUBNETS", value = join(",", var.subnet_ids) },
         { name = "AP_ENV_SLUG", value = var.env_slug },
         { name = "AP_LABELS", value = join(" ", concat(["airplane_installer:terraform_ecs"], [for key, value in var.agent_labels : "${key}:${value}"])) },
@@ -370,7 +403,7 @@ resource "aws_ecs_service" "agent_service" {
   launch_type   = "FARGATE"
   network_configuration {
     assign_public_ip = var.assign_public_agent_ip
-    security_groups  = length(var.vpc_security_group_ids) > 0 ? toset(var.vpc_security_group_ids) : toset([for sg in module.agent_security_group : sg.security_group_id])
+    security_groups  = length(var.vpc_security_group_ids) > 0 ? toset(var.vpc_security_group_ids) : toset([for sg in aws_security_group.agent_security_group : sg.id])
     subnets          = var.subnet_ids
   }
   task_definition = aws_ecs_task_definition.agent_task_def.arn

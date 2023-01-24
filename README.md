@@ -47,6 +47,10 @@ module "airplane_agent" {
 | [aws_iam_role.agent_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.default_run_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.run_execution_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_security_group.agent_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.tasks_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group_rule.agent_egress_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.tasks_egress_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [random_uuid.cluster_name_suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) | resource |
 | [random_uuid.lock_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
@@ -88,6 +92,7 @@ module "airplane_agent" {
 | Name | Description |
 |------|-------------|
 | <a name="output_agent_role_arn"></a> [agent\_role\_arn](#output\_agent\_role\_arn) | ARN of IAM role used for agent |
-| <a name="output_agent_security_group_ids"></a> [agent\_security\_group\_ids](#output\_agent\_security\_group\_ids) | IDs of created security groups, if any |
+| <a name="output_agent_security_group_ids"></a> [agent\_security\_group\_ids](#output\_agent\_security\_group\_ids) | IDs of created agent security groups, if any |
 | <a name="output_task_execution_role_arn"></a> [task\_execution\_role\_arn](#output\_task\_execution\_role\_arn) | ARN of IAM role used for task runs created by agent |
+| <a name="output_tasks_security_group_ids"></a> [tasks\_security\_group\_ids](#output\_tasks\_security\_group\_ids) | IDs of created tasks security groups, if any |
 <!-- END_TF_DOCS -->
