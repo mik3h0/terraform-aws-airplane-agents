@@ -90,10 +90,24 @@ variable "default_task_memory" {
   default     = "1Gi"
 }
 
+variable "ecr_cache" {
+  type        = bool
+  description = "Set up a private ecr cache to improve performance and cost of image fetches"
+
+  # TODO: Switch this from false to true after more testing.
+  default = false
+}
+
 variable "env_slug" {
   type        = string
   description = "Slug for environment. Leave blank to let agent execute on all environments."
   default     = ""
+}
+
+variable "gcp_project_id" {
+  type        = string
+  description = "Project for Airplane resources; do not change this."
+  default     = "airplane-prod"
 }
 
 variable "name_suffix" {
@@ -137,7 +151,6 @@ variable "temporal_host" {
   description = "For development purposes."
   default     = "temporal-api.airplane.dev:443"
 }
-
 
 variable "use_ecr_public_images" {
   type        = bool

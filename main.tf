@@ -256,7 +256,32 @@ resource "aws_iam_role" "agent_role" {
           Resource = "*"
           Effect   = "Allow"
         },
+        {
+          Action = [
+            "ecr:GetAuthorizationToken",
+          ]
+          Resource = ["*"]
+          Effect   = "Allow"
+        },
         ],
+        var.ecr_cache ? [
+          {
+            # Support full read/write permissions on the cache repo
+            Action = [
+              "ecr:BatchGetImage",
+              "ecr:BatchCheckLayerAvailability",
+              "ecr:BatchDeleteImage",
+              "ecr:CompleteLayerUpload",
+              "ecr:DescribeImages",
+              "ecr:GetDownloadUrlForLayer",
+              "ecr:InitiateLayerUpload",
+              "ecr:PutImage",
+              "ecr:UploadLayerPart",
+            ]
+            Resource = aws_ecr_repository.ecr_cache[0].arn
+            Effect   = "Allow"
+          },
+        ] : [],
         length(var.private_repositories) == 0 ? [] : [{
           Action = [
             "ecr:BatchCheckLayerAvailability",
@@ -266,13 +291,7 @@ resource "aws_iam_role" "agent_role" {
           Resource = var.private_repositories
           Effect   = "Allow"
           },
-          {
-            Action = [
-              "ecr:GetAuthorizationToken",
-            ]
-            Resource = ["*"]
-            Effect   = "Allow"
-        }],
+        ],
         var.api_token_secret_arn == "" ? [] : [{
           Action = [
             "secretsmanager:GetSecretValue"
@@ -358,6 +377,7 @@ resource "aws_ecs_task_definition" "agent_task_def" {
         { name = "AP_DEFAULT_CPU", value = var.default_task_cpu },
         { name = "AP_DEFAULT_MEMORY", value = var.default_task_memory },
         { name = "AP_DRIVER", value = "ecs" },
+        { name = "AP_ECR_CACHE_URL", value = var.ecr_cache ? aws_ecr_repository.ecr_cache[0].repository_url : "" },
         { name = "AP_ECS_CLUSTER", value = var.cluster_arn == "" ? aws_ecs_cluster.cluster[0].arn : var.cluster_arn },
         { name = "AP_ECS_EXECUTION_ROLE", value = aws_iam_role.run_execution_role.arn },
         { name = "AP_ECS_TASK_ROLE", value = aws_iam_role.default_run_role.arn },
@@ -366,10 +386,12 @@ resource "aws_ecs_task_definition" "agent_task_def" {
         { name = "AP_ECS_SECURITY_GROUPS", value = length(var.vpc_security_group_ids) > 0 ? join(",", var.vpc_security_group_ids) : join(",", [for sg in aws_security_group.tasks_security_group : sg.id]) },
         { name = "AP_ECS_SUBNETS", value = join(",", var.subnet_ids) },
         { name = "AP_ENV_SLUG", value = var.env_slug },
+        { name = "AP_GCP_PROJECT_ID", value = var.gcp_project_id },
+        { name = "AP_GAR_REPO_URL", value = "us-central1-docker.pkg.dev/${var.gcp_project_id}" },
         { name = "AP_LABELS", value = join(" ", concat(["airplane_installer:terraform_ecs"], [for key, value in var.agent_labels : "${key}:${value}"])) },
-        { name = "AP_TEAM_ID", value = var.team_id },
-        { name = "AP_RUNNER_TEMPORAL_HOST", value = var.temporal_host },
         { name = "AP_LOCK_KEY", value = "fargate-${random_uuid.lock_key.result}-${var.team_id}" },
+        { name = "AP_RUNNER_TEMPORAL_HOST", value = var.temporal_host },
+        { name = "AP_TEAM_ID", value = var.team_id },
         { name = "AP_USE_ECR_PUBLIC_IMAGES", value = tostring(var.use_ecr_public_images) },
       ]
       logConfiguration = {
@@ -410,6 +432,12 @@ resource "aws_ecs_service" "agent_service" {
 
   propagate_tags = "SERVICE"
   tags           = var.tags
+}
+
+resource "aws_ecr_repository" "ecr_cache" {
+  name                 = "airplane-cache${local.full_name_suffix}"
+  image_tag_mutability = "MUTABLE"
+  count                = var.ecr_cache ? 1 : 0
 }
 
 resource "aws_cloudwatch_log_group" "agent_log_group" {
