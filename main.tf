@@ -389,7 +389,7 @@ resource "aws_ecs_task_definition" "agent_task_def" {
         { name = "AP_GCP_PROJECT_ID", value = var.gcp_project_id },
         { name = "AP_GAR_REPO_URL", value = "us-central1-docker.pkg.dev/${var.gcp_project_id}" },
         { name = "AP_LABELS", value = join(" ", concat(["airplane_installer:terraform_ecs"], [for key, value in var.agent_labels : "${key}:${value}"])) },
-        { name = "AP_LOCK_KEY", value = "fargate-${random_uuid.lock_key.result}-${var.team_id}" },
+        { name = "AP_LOCK_KEY", value = "fargate-${random_uuid.lock_key.result}" },
         { name = "AP_RUNNER_TEMPORAL_HOST", value = var.temporal_host },
         { name = "AP_TEAM_ID", value = var.team_id },
         { name = "AP_USE_ECR_PUBLIC_IMAGES", value = tostring(var.use_ecr_public_images) },
