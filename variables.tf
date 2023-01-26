@@ -128,6 +128,12 @@ variable "private_repositories" {
   default     = []
 }
 
+variable "self_hosted_data_plane" {
+  type        = bool
+  description = "Enable self-hosted data plane feature (alpha, requires support assistance to use)"
+  default     = false
+}
+
 variable "service_name" {
   type        = string
   description = "Name to assign to ECS service"

@@ -1,0 +1,265 @@
+// Data plane Redis
+resource "aws_elasticache_subnet_group" "redis" {
+  name       = "airplane-redis${local.full_name_suffix}"
+  subnet_ids = var.subnet_ids
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_security_group" "redis" {
+  name        = "airplane-redis${local.full_name_suffix}"
+  description = "Security group for Airplane redis"
+  vpc_id      = data.aws_subnet.selected[0].vpc_id
+  tags = {
+    "Name" : "airplane-redis${local.full_name_suffix}",
+  }
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_security_group_rule" "redis_ingress" {
+  type                     = "ingress"
+  from_port                = 6379
+  to_port                  = 6379
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.redis[0].id
+  source_security_group_id = aws_security_group.agent_security_group[0].id
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_elasticache_cluster" "redis" {
+  cluster_id           = "airplane-redis${local.full_name_suffix}"
+  engine               = "redis"
+  node_type            = "cache.t3.small"
+  num_cache_nodes      = 1
+  parameter_group_name = "default.redis6.x"
+  subnet_group_name    = aws_elasticache_subnet_group.redis[0].name
+  engine_version       = "6.2"
+  port                 = 6379
+  security_group_ids   = [aws_security_group.redis[0].id]
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+// Data plane bucket
+resource "aws_s3_bucket" "data_plane" {
+  bucket = "airplane-data-${var.team_id}${local.full_name_suffix}"
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_s3_bucket_public_access_block" "data_plane" {
+  bucket = aws_s3_bucket.data_plane[0].id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+// External ALB
+resource "aws_security_group" "external_alb" {
+  name        = "ap-alb-ext${local.full_name_suffix}"
+  description = "Security group for Airplane external LB"
+  vpc_id      = data.aws_subnet.selected[0].vpc_id
+  tags = {
+    "Name" : "ap-alb-ext${local.full_name_suffix}",
+  }
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_security_group_rule" "external_alb_ingress" {
+  type              = "ingress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  ipv6_cidr_blocks  = ["::/0"]
+  security_group_id = aws_security_group.external_alb[0].id
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_security_group_rule" "external_alb_egress" {
+  type                     = "egress"
+  from_port                = 2190
+  to_port                  = 2190
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.external_alb[0].id
+  source_security_group_id = aws_security_group.agent_security_group[0].id
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_alb" "external" {
+  name            = "ap-alb-ext${local.full_name_suffix}"
+  internal        = false
+  security_groups = [aws_security_group.external_alb[0].id]
+  subnets         = var.subnet_ids
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_alb_target_group" "external" {
+  name        = "ap-alb-ext${local.full_name_suffix}"
+  port        = 2190
+  protocol    = "HTTP"
+  vpc_id      = data.aws_subnet.selected[0].vpc_id
+  target_type = "ip"
+
+  health_check {
+    path = "/healthz"
+  }
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_alb_listener" "alb_external_http" {
+  load_balancer_arn = aws_alb.external[0].arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    target_group_arn = aws_alb_target_group.external[0].arn
+    type             = "forward"
+  }
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+// Internal ALB
+resource "aws_security_group" "internal_alb" {
+  name        = "ap-alb-int${local.full_name_suffix}"
+  description = "Security group for Airplane internal LB"
+  vpc_id      = data.aws_subnet.selected[0].vpc_id
+  tags = {
+    "Name" : "ap-alb-int${local.full_name_suffix}",
+  }
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_security_group_rule" "internal_alb_ingress" {
+  type                     = "ingress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.internal_alb[0].id
+  source_security_group_id = aws_security_group.tasks_security_group[0].id
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_security_group_rule" "internal_alb_egress" {
+  type                     = "egress"
+  from_port                = 2189
+  to_port                  = 2189
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.internal_alb[0].id
+  source_security_group_id = aws_security_group.agent_security_group[0].id
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_alb" "internal" {
+  name            = "ap-alb-int${local.full_name_suffix}"
+  internal        = true
+  security_groups = [aws_security_group.internal_alb[0].id]
+  subnets         = var.subnet_ids
+  count           = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_alb_target_group" "internal" {
+  name        = "ap-alb-int${local.full_name_suffix}"
+  port        = 2189
+  protocol    = "HTTP"
+  vpc_id      = data.aws_subnet.selected[0].vpc_id
+  target_type = "ip"
+
+  health_check {
+    path = "/healthz"
+  }
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_alb_listener" "internal_alb_http" {
+  load_balancer_arn = aws_alb.internal[0].arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    target_group_arn = aws_alb_target_group.internal[0].arn
+    type             = "forward"
+  }
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+// Extra agent security group rules
+resource "aws_security_group_rule" "agent_egress_redis" {
+  type                     = "egress"
+  from_port                = 6379
+  to_port                  = 6379
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.agent_security_group[0].id
+  source_security_group_id = aws_security_group.redis[0].id
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_security_group_rule" "agent_ingress_internal_alb" {
+  type                     = "ingress"
+  from_port                = 2189
+  to_port                  = 2189
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.agent_security_group[0].id
+  source_security_group_id = aws_security_group.internal_alb[0].id
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_security_group_rule" "agent_ingress_external_alb" {
+  type                     = "ingress"
+  from_port                = 2190
+  to_port                  = 2190
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.agent_security_group[0].id
+  source_security_group_id = aws_security_group.external_alb[0].id
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_ecs_service" "agent_service_data_plane" {
+  name          = "${var.service_name}${local.full_name_suffix}"
+  cluster       = var.cluster_arn == "" ? aws_ecs_cluster.cluster[0].arn : var.cluster_arn
+  desired_count = var.num_agents
+  launch_type   = "FARGATE"
+  network_configuration {
+    assign_public_ip = var.assign_public_agent_ip
+    security_groups  = length(var.vpc_security_group_ids) > 0 ? toset(var.vpc_security_group_ids) : toset([for sg in aws_security_group.agent_security_group : sg.id])
+    subnets          = var.subnet_ids
+  }
+  task_definition = aws_ecs_task_definition.agent_task_def.arn
+
+  load_balancer {
+    target_group_arn = aws_alb_target_group.internal[0].arn
+    container_name   = "airplane-agent"
+    container_port   = 2189
+  }
+
+  load_balancer {
+    target_group_arn = aws_alb_target_group.external[0].arn
+    container_name   = "airplane-agent"
+    container_port   = 2190
+  }
+
+  propagate_tags = "SERVICE"
+  tags           = var.tags
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
