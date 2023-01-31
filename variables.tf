@@ -73,9 +73,9 @@ variable "agent_mem" {
 }
 
 variable "data_plane_domain" {
-  type =        string
+  type        = string
   description = "For development purposes."
-  default =     "d.airplane.sh"
+  default     = "d.airplane.sh"
 }
 
 variable "debug_logging" {

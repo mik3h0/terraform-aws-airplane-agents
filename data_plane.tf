@@ -143,7 +143,7 @@ data "aws_secretsmanager_secret_version" "api_token_secret_version" {
 }
 
 data "http" "verify_zone_dns" {
-  url = "${var.api_host}/v0/zones/updateDNS"
+  url    = "${var.api_host}/v0/zones/updateDNS"
   method = "POST"
 
   request_headers = {
@@ -156,7 +156,7 @@ data "http" "verify_zone_dns" {
 
   lifecycle {
     postcondition {
-      condition = self.status_code == 200
+      condition     = self.status_code == 200
       error_message = "Status code invalid"
     }
   }
@@ -164,20 +164,20 @@ data "http" "verify_zone_dns" {
 }
 
 data "http" "update_external_alb_dns" {
-  url = "${var.api_host}/v0/zones/updateDNS"
+  url    = "${var.api_host}/v0/zones/updateDNS"
   method = "POST"
 
   request_headers = {
     "X-Airplane-API-Key" = var.api_token_secret_arn != "" ? data.aws_secretsmanager_secret_version.api_token_secret_version[0].secret_string : var.api_token
   }
   request_body = jsonencode({
-    hostname = "${var.zone_slug}.${var.team_id}.${var.data_plane_domain}."
+    hostname             = "${var.zone_slug}.${var.team_id}.${var.data_plane_domain}."
     loadBalancerHostname = "${aws_alb.external[0].dns_name}."
   })
 
   lifecycle {
     postcondition {
-      condition = self.status_code == 200
+      condition     = self.status_code == 200
       error_message = "Status code invalid"
     }
   }
@@ -185,9 +185,9 @@ data "http" "update_external_alb_dns" {
 }
 
 resource "aws_acm_certificate" "alb_external_certificate" {
-  domain_name = "${var.zone_slug}.${var.team_id}.${var.data_plane_domain}"
+  domain_name       = "${var.zone_slug}.${var.team_id}.${var.data_plane_domain}"
   validation_method = "DNS"
-  count = var.self_hosted_data_plane ? 1 : 0
+  count             = var.self_hosted_data_plane ? 1 : 0
 
   lifecycle {
     create_before_destroy = true
@@ -196,7 +196,7 @@ resource "aws_acm_certificate" "alb_external_certificate" {
 
 resource "aws_acm_certificate_validation" "alb_external_certificate_validation" {
   certificate_arn = aws_acm_certificate.alb_external_certificate[0].arn
-  count = var.self_hosted_data_plane ? 1 : 0
+  count           = var.self_hosted_data_plane ? 1 : 0
 }
 
 resource "aws_alb_listener" "alb_external_https" {
