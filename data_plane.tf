@@ -84,6 +84,18 @@ resource "aws_security_group_rule" "external_alb_ingress" {
   count = var.self_hosted_data_plane ? 1 : 0
 }
 
+resource "aws_security_group_rule" "external_alb_https_ingress_rule" {
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  ipv6_cidr_blocks  = ["::/0"]
+  security_group_id = aws_security_group.external_alb[0].id
+
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
 resource "aws_security_group_rule" "external_alb_egress" {
   type                     = "egress"
   from_port                = 2190
@@ -118,10 +130,80 @@ resource "aws_alb_target_group" "external" {
   count = var.self_hosted_data_plane ? 1 : 0
 }
 
-resource "aws_alb_listener" "alb_external_http" {
+data "aws_secretsmanager_secret" "api_token_secret" {
+  arn = var.api_token_secret_arn
+
+  count = var.api_token_secret_arn == "" ? 0 : 1
+}
+
+data "aws_secretsmanager_secret_version" "api_token_secret_version" {
+  secret_id = data.aws_secretsmanager_secret.api_token_secret[0].id
+
+  count = var.api_token_secret_arn == "" ? 0 : 1
+}
+
+data "http" "verify_zone_dns" {
+  url = "${var.api_host}/v0/zones/updateDNS"
+  method = "POST"
+
+  request_headers = {
+    "X-Airplane-API-Key" = var.api_token_secret_arn != "" ? data.aws_secretsmanager_secret_version.api_token_secret_version[0].secret_string : var.api_token
+  }
+  request_body = jsonencode({
+    verificationCName = tolist(aws_acm_certificate.alb_external_certificate[0].domain_validation_options)[0].resource_record_name
+    verificationValue = tolist(aws_acm_certificate.alb_external_certificate[0].domain_validation_options)[0].resource_record_value
+  })
+
+  lifecycle {
+    postcondition {
+      condition = self.status_code == 200
+      error_message = "Status code invalid"
+    }
+  }
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+data "http" "update_external_alb_dns" {
+  url = "${var.api_host}/v0/zones/updateDNS"
+  method = "POST"
+
+  request_headers = {
+    "X-Airplane-API-Key" = var.api_token_secret_arn != "" ? data.aws_secretsmanager_secret_version.api_token_secret_version[0].secret_string : var.api_token
+  }
+  request_body = jsonencode({
+    hostname = "${var.zone_slug}.${var.team_id}.${var.data_plane_domain}."
+    loadBalancerHostname = "${aws_alb.external[0].dns_name}."
+  })
+
+  lifecycle {
+    postcondition {
+      condition = self.status_code == 200
+      error_message = "Status code invalid"
+    }
+  }
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_acm_certificate" "alb_external_certificate" {
+  domain_name = "${var.zone_slug}.${var.team_id}.${var.data_plane_domain}"
+  validation_method = "DNS"
+  count = var.self_hosted_data_plane ? 1 : 0
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_acm_certificate_validation" "alb_external_certificate_validation" {
+  certificate_arn = aws_acm_certificate.alb_external_certificate[0].arn
+  count = var.self_hosted_data_plane ? 1 : 0
+}
+
+resource "aws_alb_listener" "alb_external_https" {
   load_balancer_arn = aws_alb.external[0].arn
-  port              = "80"
-  protocol          = "HTTP"
+  port              = "443"
+  protocol          = "HTTPS"
+  certificate_arn   = aws_acm_certificate.alb_external_certificate[0].arn
 
   default_action {
     target_group_arn = aws_alb_target_group.external[0].arn
@@ -129,6 +211,9 @@ resource "aws_alb_listener" "alb_external_http" {
   }
 
   count = var.self_hosted_data_plane ? 1 : 0
+  depends_on = [
+    resource.aws_acm_certificate_validation.alb_external_certificate_validation[0]
+  ]
 }
 
 // Internal ALB

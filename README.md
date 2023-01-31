@@ -36,9 +36,11 @@ module "airplane_agent" {
 
 | Name | Type |
 |------|------|
+| [aws_acm_certificate.alb_external_certificate](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate) | resource |
+| [aws_acm_certificate_validation.alb_external_certificate_validation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate_validation) | resource |
 | [aws_alb.external](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/alb) | resource |
 | [aws_alb.internal](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/alb) | resource |
-| [aws_alb_listener.alb_external_http](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/alb_listener) | resource |
+| [aws_alb_listener.alb_external_https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/alb_listener) | resource |
 | [aws_alb_listener.internal_alb_http](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/alb_listener) | resource |
 | [aws_alb_target_group.external](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/alb_target_group) | resource |
 | [aws_alb_target_group.internal](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/alb_target_group) | resource |
@@ -69,6 +71,7 @@ module "airplane_agent" {
 | [aws_security_group_rule.agent_ingress_external_alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.agent_ingress_internal_alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.external_alb_egress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.external_alb_https_ingress_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.external_alb_ingress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.internal_alb_egress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.internal_alb_ingress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
@@ -78,7 +81,11 @@ module "airplane_agent" {
 | [random_uuid.lock_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
+| [aws_secretsmanager_secret.api_token_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret) | data source |
+| [aws_secretsmanager_secret_version.api_token_secret_version](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version) | data source |
 | [aws_subnet.selected](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet) | data source |
+| [http_http.update_external_alb_dns](https://registry.terraform.io/providers/hashicorp/http/latest/docs/data-sources/http) | data source |
+| [http_http.verify_zone_dns](https://registry.terraform.io/providers/hashicorp/http/latest/docs/data-sources/http) | data source |
 
 ## Inputs
 
@@ -96,6 +103,7 @@ module "airplane_agent" {
 | <a name="input_api_token_secret_kms_key_arn"></a> [api\_token\_secret\_kms\_key\_arn](#input\_api\_token\_secret\_kms\_key\_arn) | ARN of customer-managed KMS key, if any, used to encrypt API Token Secret. | `string` | `""` | no |
 | <a name="input_assign_public_agent_ip"></a> [assign\_public\_agent\_ip](#input\_assign\_public\_agent\_ip) | If enabled, assigns a public IP address to the agent service. If disabled, the subnet used by the agent must be configured with a NAT gateway to enable internet access. | `bool` | `true` | no |
 | <a name="input_cluster_arn"></a> [cluster\_arn](#input\_cluster\_arn) | Your ECS cluster ARN. Leave blank to create a new cluster. | `string` | `""` | no |
+| <a name="input_data_plane_domain"></a> [data\_plane\_domain](#input\_data\_plane\_domain) | For development purposes. | `string` | `"d.airplane.sh"` | no |
 | <a name="input_debug_logging"></a> [debug\_logging](#input\_debug\_logging) | Enable debug logging in the agent and runners | `bool` | `false` | no |
 | <a name="input_default_task_cpu"></a> [default\_task\_cpu](#input\_default\_task\_cpu) | Default CPU for tasks, in millicores (e.g. 500m or 1000m) | `string` | `"1000m"` | no |
 | <a name="input_default_task_memory"></a> [default\_task\_memory](#input\_default\_task\_memory) | Default memory for tasks (e.g. 500Mi or 2Gi) | `string` | `"1Gi"` | no |
@@ -112,6 +120,7 @@ module "airplane_agent" {
 | <a name="input_temporal_host"></a> [temporal\_host](#input\_temporal\_host) | For development purposes. | `string` | `"temporal-api.airplane.dev:443"` | no |
 | <a name="input_use_ecr_public_images"></a> [use\_ecr\_public\_images](#input\_use\_ecr\_public\_images) | Use ECR-based public images for task runs | `bool` | `true` | no |
 | <a name="input_vpc_security_group_ids"></a> [vpc\_security\_group\_ids](#input\_vpc\_security\_group\_ids) | List of security group IDs to use. If not set, a new security group is created for the VPC containing the provided subnets. | `list(string)` | `[]` | no |
+| <a name="input_zone_slug"></a> [zone\_slug](#input\_zone\_slug) | Zone slug for use with self-hosted data plane | `string` | `"test"` | no |
 
 ## Outputs
 

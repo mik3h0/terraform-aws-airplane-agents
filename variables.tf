@@ -72,6 +72,12 @@ variable "agent_mem" {
   default     = 512
 }
 
+variable "data_plane_domain" {
+  type =        string
+  description = "For development purposes."
+  default =     "d.airplane.sh"
+}
+
 variable "debug_logging" {
   type        = bool
   description = "Enable debug logging in the agent and runners"
@@ -168,4 +174,10 @@ variable "vpc_security_group_ids" {
   type        = list(string)
   description = "List of security group IDs to use. If not set, a new security group is created for the VPC containing the provided subnets."
   default     = []
+}
+
+variable "zone_slug" {
+  type        = string
+  description = "Zone slug for use with self-hosted data plane"
+  default     = "test"
 }
