@@ -94,6 +94,7 @@ module "airplane_agent" {
 | <a name="input_team_id"></a> [team\_id](#input\_team\_id) | Airplane team ID - retrieve via `airplane auth info`. | `string` | n/a | yes |
 | <a name="input_additional_run_policy_arns"></a> [additional\_run\_policy\_arns](#input\_additional\_run\_policy\_arns) | List of additional IAM policies to attach to the default run role | `list(string)` | `[]` | no |
 | <a name="input_agent_cpu"></a> [agent\_cpu](#input\_agent\_cpu) | CPU per agent, in vCPU units | `number` | `256` | no |
+| <a name="input_agent_image"></a> [agent\_image](#input\_agent\_image) | URI for airplane agent image | `string` | `"public.ecr.aws/airplanedev-prod/agentv2:1"` | no |
 | <a name="input_agent_labels"></a> [agent\_labels](#input\_agent\_labels) | Map of label key/values to attach to agents. Labels can be used to constrain where tasks execute. | `map(string)` | <pre>{<br>  "ecs": "true"<br>}</pre> | no |
 | <a name="input_agent_mem"></a> [agent\_mem](#input\_agent\_mem) | Memory per agent, in megabytes | `number` | `512` | no |
 | <a name="input_allowed_iam_roles"></a> [allowed\_iam\_roles](#input\_allowed\_iam\_roles) | List of additional allowed IAM roles that tasks are allowed to assume | `list(string)` | `[]` | no |
@@ -103,6 +104,7 @@ module "airplane_agent" {
 | <a name="input_api_token_secret_kms_key_arn"></a> [api\_token\_secret\_kms\_key\_arn](#input\_api\_token\_secret\_kms\_key\_arn) | ARN of customer-managed KMS key, if any, used to encrypt API Token Secret. | `string` | `""` | no |
 | <a name="input_assign_public_agent_ip"></a> [assign\_public\_agent\_ip](#input\_assign\_public\_agent\_ip) | If enabled, assigns a public IP address to the agent service. If disabled, the subnet used by the agent must be configured with a NAT gateway to enable internet access. | `bool` | `true` | no |
 | <a name="input_cluster_arn"></a> [cluster\_arn](#input\_cluster\_arn) | Your ECS cluster ARN. Leave blank to create a new cluster. | `string` | `""` | no |
+| <a name="input_cpu_architecture"></a> [cpu\_architecture](#input\_cpu\_architecture) | CPU architecture for agent and tasks. Note: ARM support is experimental- contact support for more details. | `string` | `"X86_64"` | no |
 | <a name="input_data_plane_domain"></a> [data\_plane\_domain](#input\_data\_plane\_domain) | For development purposes. | `string` | `"d.airplane.sh"` | no |
 | <a name="input_debug_logging"></a> [debug\_logging](#input\_debug\_logging) | Enable debug logging in the agent and runners | `bool` | `false` | no |
 | <a name="input_default_task_cpu"></a> [default\_task\_cpu](#input\_default\_task\_cpu) | Default CPU for tasks, in millicores (e.g. 500m or 1000m) | `string` | `"1000m"` | no |

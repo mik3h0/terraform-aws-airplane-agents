@@ -381,19 +381,20 @@ resource "aws_ecs_task_definition" "agent_task_def" {
   container_definitions = jsonencode([
     {
       name  = "airplane-agent"
-      image = "public.ecr.aws/airplanedev-prod/agentv2:1"
+      image = var.agent_image
       environment = [
         { name = "AP_API_HOST", value = var.api_host },
         { name = "AP_API_TOKEN", value = var.api_token },
         { name = "AP_API_TOKEN_SECRET_ARN", value = var.api_token_secret_arn },
         { name = "AP_AUTO_UPGRADE", value = "true" },
-        { name = "AP_AGENT_IMAGE", value = "public.ecr.aws/airplanedev-prod/agentv2:1" },
+        { name = "AP_AGENT_IMAGE", value = var.agent_image },
         { name = "AP_DEBUG_LOGGING", value = tostring(var.debug_logging) },
         { name = "AP_DEFAULT_CPU", value = var.default_task_cpu },
         { name = "AP_DEFAULT_MEMORY", value = var.default_task_memory },
         { name = "AP_DRIVER", value = "ecs" },
         { name = "AP_ECR_CACHE_URL", value = var.ecr_cache ? aws_ecr_repository.ecr_cache[0].repository_url : "" },
         { name = "AP_ECS_CLUSTER", value = var.cluster_arn == "" ? aws_ecs_cluster.cluster[0].arn : var.cluster_arn },
+        { name = "AP_ECS_CPU_ARCHITECTURE", value = var.cpu_architecture },
         { name = "AP_ECS_EXECUTION_ROLE", value = aws_iam_role.run_execution_role.arn },
         { name = "AP_ECS_TASK_ROLE", value = aws_iam_role.default_run_role.arn },
         { name = "AP_ECS_LOG_GROUP", value = aws_cloudwatch_log_group.run_log_group.name },
@@ -443,7 +444,7 @@ resource "aws_ecs_task_definition" "agent_task_def" {
   task_role_arn      = aws_iam_role.agent_role.arn
   execution_role_arn = aws_iam_role.agent_execution_role.arn
   runtime_platform {
-    cpu_architecture        = "X86_64"
+    cpu_architecture        = var.cpu_architecture
     operating_system_family = "LINUX"
   }
   requires_compatibilities = ["FARGATE"]

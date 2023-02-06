@@ -17,6 +17,12 @@ variable "allowed_iam_roles" {
   default     = []
 }
 
+variable "agent_image" {
+  type        = string
+  description = "URI for airplane agent image"
+  default     = "public.ecr.aws/airplanedev-prod/agentv2:1"
+}
+
 variable "api_host" {
   type        = string
   description = "For development purposes."
@@ -52,6 +58,12 @@ variable "cluster_arn" {
   type        = string
   description = "Your ECS cluster ARN. Leave blank to create a new cluster."
   default     = ""
+}
+
+variable "cpu_architecture" {
+  type        = string
+  description = "CPU architecture for agent and tasks. Note: ARM support is experimental- contact support for more details."
+  default     = "X86_64"
 }
 
 variable "agent_labels" {
