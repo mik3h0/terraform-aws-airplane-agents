@@ -70,8 +70,9 @@ resource "aws_security_group_rule" "tasks_egress_rule" {
 }
 
 resource "aws_iam_policy" "default_run_policy" {
-  path = "/airplane/"
-  name = "DefaultRunRolePolicy${local.full_name_suffix}"
+  name_prefix = var.default_run_policy_prefix
+  path        = "/airplane/"
+  name        = "DefaultRunRolePolicy${local.full_name_suffix}"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -106,8 +107,9 @@ resource "aws_iam_policy" "default_run_policy" {
 }
 
 resource "aws_iam_role" "default_run_role" {
-  path = "/airplane/"
-  name = "DefaultRunRole${local.full_name_suffix}"
+  name_prefix = var.default_run_role_prefix
+  path        = "/airplane/"
+  name        = "DefaultRunRole${local.full_name_suffix}"
   assume_role_policy = jsonencode({
     Version = "2008-10-17"
     Statement = [
@@ -131,8 +133,9 @@ resource "aws_iam_role" "default_run_role" {
 }
 
 resource "aws_iam_role" "run_execution_role" {
-  path = "/airplane/"
-  name = "RunExecutionRole${local.full_name_suffix}"
+  name_prefix = var.run_execution_role_prefix
+  path        = "/airplane/"
+  name        = "RunExecutionRole${local.full_name_suffix}"
   assume_role_policy = jsonencode({
     Version = "2008-10-17"
     Statement = [
@@ -154,8 +157,9 @@ resource "aws_iam_role" "run_execution_role" {
 }
 
 resource "aws_iam_role" "agent_role" {
-  path = "/airplane/"
-  name = "AgentTaskRole${local.full_name_suffix}"
+  name_prefix = var.agent_role_prefix
+  path        = "/airplane/"
+  name        = "AgentTaskRole${local.full_name_suffix}"
   assume_role_policy = jsonencode({
     Version = "2008-10-17"
     Statement = [
@@ -328,8 +332,9 @@ resource "aws_iam_role" "agent_role" {
 }
 
 resource "aws_iam_role" "agent_execution_role" {
-  path = "/airplane/"
-  name = "AgentTaskExecutionRole${local.full_name_suffix}"
+  name_prefix = var.agent_execution_role_prefix
+  path        = "/airplane/"
+  name        = "AgentTaskExecutionRole${local.full_name_suffix}"
   assume_role_policy = jsonencode({
     Version = "2008-10-17"
     Statement = [

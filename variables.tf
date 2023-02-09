@@ -122,6 +122,36 @@ variable "env_slug" {
   default     = ""
 }
 
+variable "default_run_role_prefix" {
+  type        = string
+  description = "Prefix for the default run role. Leave blank to be the default terraform."
+  default     = null
+}
+
+variable "default_run_policy_prefix" {
+  type        = string
+  description = "Prefix for the default run policy. Leave blank to be the default terraform."
+  default     = null
+}
+
+variable "agent_role_prefix" {
+  type        = string
+  description = "Prefix for the agent role. Leave blank to be the default terraform."
+  default     = null
+}
+
+variable "agent_execution_role_prefix" {
+  type        = string
+  description = "Prefix for the agent execution role. Leave blank to be the default terraform."
+  default     = null
+}
+
+variable "run_execution_role_prefix" {
+  type        = string
+  description = "Prefix for the run execution role. Leave blank to be the default terraform."
+  default     = null
+}
+
 variable "gcp_project_id" {
   type        = string
   description = "Project for Airplane resources; do not change this."
