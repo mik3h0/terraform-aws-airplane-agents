@@ -13,7 +13,7 @@ resource "aws_ecs_cluster" "cluster" {
 
 resource "aws_ecs_cluster_capacity_providers" "cluster" {
   cluster_name       = aws_ecs_cluster.cluster[0].name
-  capacity_providers = ["FARGATE"]
+  capacity_providers = concat(["FARGATE"], var.use_fargate_spot ? ["FARGATE_SPOT"] : [])
 
   count = var.cluster_arn == "" ? 1 : 0
 }

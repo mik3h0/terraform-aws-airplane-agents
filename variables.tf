@@ -182,6 +182,12 @@ variable "use_ecr_public_images" {
   default     = true
 }
 
+variable "use_fargate_spot" {
+  type        = bool
+  description = "Use Fargate Spot for agent and task runs"
+  default     = false
+}
+
 variable "vpc_security_group_ids" {
   type        = list(string)
   description = "List of security group IDs to use. If not set, a new security group is created for the VPC containing the provided subnets."
