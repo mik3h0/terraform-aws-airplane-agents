@@ -3,7 +3,7 @@ data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
 locals {
-  full_name_suffix = var.name_suffix == "" ? "" : "-${var.name_suffix}"
+  full_name_suffix = var.name_suffix == "" ? "" : "-${trimprefix(var.name_suffix, "-")}"
 }
 
 resource "aws_ecs_cluster" "cluster" {
