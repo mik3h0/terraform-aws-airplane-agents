@@ -15,6 +15,15 @@ resource "aws_ecs_cluster_capacity_providers" "cluster" {
   cluster_name       = aws_ecs_cluster.cluster[0].name
   capacity_providers = concat(["FARGATE"], var.use_fargate_spot ? ["FARGATE_SPOT"] : [])
 
+  dynamic "default_capacity_provider_strategy" {
+    for_each = var.use_fargate_spot ? [1] : []
+    content {
+      capacity_provider = var.default_capacity_provider
+      base              = var.default_capacity_provider_base
+      weight            = var.default_capacity_provider_weight
+    }
+  }
+
   count = var.cluster_arn == "" ? 1 : 0
 }
 

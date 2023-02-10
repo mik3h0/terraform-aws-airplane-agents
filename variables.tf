@@ -96,6 +96,32 @@ variable "debug_logging" {
   default     = false
 }
 
+variable "default_capacity_provider" {
+  type        = string
+  description = "Default capacity provider to use for agent and task runs. Only used if var.use_fargate_spot is true."
+  default     = "FARGATE"
+  validation {
+    condition     = can(regex("FARGATE|FARGATE_SPOT", var.default_capacity_provider))
+    error_message = "default_capacity_provider must be either FARGATE or FARGATE_SPOT."
+  }
+}
+
+variable "default_capacity_provider_base" {
+  type        = number
+  description = "Default capacity provider base to use for agent and task runs. Only used if var.use_fargate_spot is true."
+  default     = 1
+}
+
+variable "default_capacity_provider_weight" {
+  type        = number
+  description = "Default capacity provider weight to use for agent and task runs. Only used if var.use_fargate_spot is true."
+  default     = 0
+  validation {
+    condition     = var.default_capacity_provider_weight >= 0 && var.default_capacity_provider_weight <= 100
+    error_message = "default_capacity_provider_weight must be between 0 and 100."
+  }
+}
+
 variable "default_task_cpu" {
   type        = string
   description = "Default CPU for tasks, in millicores (e.g. 500m or 1000m)"
