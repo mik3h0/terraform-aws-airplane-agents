@@ -109,7 +109,7 @@ module "airplane_agent" {
 | <a name="input_debug_logging"></a> [debug\_logging](#input\_debug\_logging) | Enable debug logging in the agent and runners | `bool` | `false` | no |
 | <a name="input_default_task_cpu"></a> [default\_task\_cpu](#input\_default\_task\_cpu) | Default CPU for tasks, in millicores (e.g. 500m or 1000m) | `string` | `"1000m"` | no |
 | <a name="input_default_task_memory"></a> [default\_task\_memory](#input\_default\_task\_memory) | Default memory for tasks (e.g. 500Mi or 2Gi) | `string` | `"1Gi"` | no |
-| <a name="input_ecr_cache"></a> [ecr\_cache](#input\_ecr\_cache) | Set up a private ecr cache to improve performance and cost of image fetches | `bool` | `false` | no |
+| <a name="input_ecr_cache"></a> [ecr\_cache](#input\_ecr\_cache) | Set up a private ecr cache to improve performance and cost of image fetches | `bool` | `true` | no |
 | <a name="input_env_slug"></a> [env\_slug](#input\_env\_slug) | Slug for environment. Leave blank to let agent execute on all environments. | `string` | `""` | no |
 | <a name="input_gcp_project_id"></a> [gcp\_project\_id](#input\_gcp\_project\_id) | Project for Airplane resources; do not change this. | `string` | `"airplane-prod"` | no |
 | <a name="input_name_suffix"></a> [name\_suffix](#input\_name\_suffix) | A custom suffix to add to all generated names; a dash is automatically added, so there is no need to include that if set. | `string` | `""` | no |

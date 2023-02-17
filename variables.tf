@@ -112,8 +112,7 @@ variable "ecr_cache" {
   type        = bool
   description = "Set up a private ecr cache to improve performance and cost of image fetches"
 
-  # TODO: Switch this from false to true after more testing.
-  default = false
+  default = true
 }
 
 variable "env_slug" {
