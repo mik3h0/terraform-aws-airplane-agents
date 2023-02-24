@@ -1,9 +1,9 @@
-// Data plane Redis
+// Agent storage Redis
 resource "aws_elasticache_subnet_group" "redis" {
   name       = "airplane-redis${local.full_name_suffix}"
   subnet_ids = var.subnet_ids
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_security_group" "redis" {
@@ -14,7 +14,7 @@ resource "aws_security_group" "redis" {
     "Name" : "airplane-redis${local.full_name_suffix}",
   }
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_security_group_rule" "redis_ingress" {
@@ -25,7 +25,7 @@ resource "aws_security_group_rule" "redis_ingress" {
   security_group_id        = aws_security_group.redis[0].id
   source_security_group_id = aws_security_group.agent_security_group[0].id
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_elasticache_cluster" "redis" {
@@ -39,25 +39,25 @@ resource "aws_elasticache_cluster" "redis" {
   port                 = 6379
   security_group_ids   = [aws_security_group.redis[0].id]
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
-// Data plane bucket
-resource "aws_s3_bucket" "data_plane" {
+// Agent storage bucket
+resource "aws_s3_bucket" "agent_storage" {
   bucket = "airplane-data-${var.team_id}${local.full_name_suffix}"
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
-resource "aws_s3_bucket_public_access_block" "data_plane" {
-  bucket = aws_s3_bucket.data_plane[0].id
+resource "aws_s3_bucket_public_access_block" "agent_storage" {
+  bucket = aws_s3_bucket.agent_storage[0].id
 
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 // External ALB
@@ -69,7 +69,7 @@ resource "aws_security_group" "external_alb" {
     "Name" : "ap-alb-ext${local.full_name_suffix}",
   }
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_security_group_rule" "external_alb_ingress" {
@@ -81,7 +81,7 @@ resource "aws_security_group_rule" "external_alb_ingress" {
   ipv6_cidr_blocks  = ["::/0"]
   security_group_id = aws_security_group.external_alb[0].id
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_security_group_rule" "external_alb_https_ingress_rule" {
@@ -93,7 +93,7 @@ resource "aws_security_group_rule" "external_alb_https_ingress_rule" {
   ipv6_cidr_blocks  = ["::/0"]
   security_group_id = aws_security_group.external_alb[0].id
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_security_group_rule" "external_alb_egress" {
@@ -104,7 +104,7 @@ resource "aws_security_group_rule" "external_alb_egress" {
   security_group_id        = aws_security_group.external_alb[0].id
   source_security_group_id = aws_security_group.agent_security_group[0].id
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_alb" "external" {
@@ -113,7 +113,7 @@ resource "aws_alb" "external" {
   security_groups = [aws_security_group.external_alb[0].id]
   subnets         = var.subnet_ids
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_alb_target_group" "external" {
@@ -127,7 +127,7 @@ resource "aws_alb_target_group" "external" {
     path = "/healthz"
   }
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 data "aws_secretsmanager_secret" "api_token_secret" {
@@ -160,7 +160,7 @@ data "http" "verify_zone_dns" {
       error_message = "Status code invalid"
     }
   }
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 data "http" "update_external_alb_dns" {
@@ -171,7 +171,7 @@ data "http" "update_external_alb_dns" {
     "X-Airplane-API-Key" = var.api_token_secret_arn != "" ? data.aws_secretsmanager_secret_version.api_token_secret_version[0].secret_string : var.api_token
   }
   request_body = jsonencode({
-    hostname             = "${var.zone_slug}.${var.team_id}.${var.data_plane_domain}."
+    hostname             = "${var.zone_slug}.${var.team_id}.${var.agent_storage_domain}."
     loadBalancerHostname = "${aws_alb.external[0].dns_name}."
   })
 
@@ -181,13 +181,13 @@ data "http" "update_external_alb_dns" {
       error_message = "Status code invalid"
     }
   }
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_acm_certificate" "alb_external_certificate" {
-  domain_name       = "${var.zone_slug}.${var.team_id}.${var.data_plane_domain}"
+  domain_name       = "${var.zone_slug}.${var.team_id}.${var.agent_storage_domain}"
   validation_method = "DNS"
-  count             = var.self_hosted_data_plane ? 1 : 0
+  count             = var.self_hosted_agent_storage ? 1 : 0
 
   lifecycle {
     create_before_destroy = true
@@ -196,7 +196,7 @@ resource "aws_acm_certificate" "alb_external_certificate" {
 
 resource "aws_acm_certificate_validation" "alb_external_certificate_validation" {
   certificate_arn = aws_acm_certificate.alb_external_certificate[0].arn
-  count           = var.self_hosted_data_plane ? 1 : 0
+  count           = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_alb_listener" "alb_external_https" {
@@ -210,7 +210,7 @@ resource "aws_alb_listener" "alb_external_https" {
     type             = "forward"
   }
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
   depends_on = [
     resource.aws_acm_certificate_validation.alb_external_certificate_validation[0]
   ]
@@ -225,7 +225,7 @@ resource "aws_security_group" "internal_alb" {
     "Name" : "ap-alb-int${local.full_name_suffix}",
   }
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_security_group_rule" "internal_alb_ingress" {
@@ -236,7 +236,7 @@ resource "aws_security_group_rule" "internal_alb_ingress" {
   security_group_id        = aws_security_group.internal_alb[0].id
   source_security_group_id = aws_security_group.tasks_security_group[0].id
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_security_group_rule" "internal_alb_egress" {
@@ -247,7 +247,7 @@ resource "aws_security_group_rule" "internal_alb_egress" {
   security_group_id        = aws_security_group.internal_alb[0].id
   source_security_group_id = aws_security_group.agent_security_group[0].id
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_alb" "internal" {
@@ -255,7 +255,7 @@ resource "aws_alb" "internal" {
   internal        = true
   security_groups = [aws_security_group.internal_alb[0].id]
   subnets         = var.subnet_ids
-  count           = var.self_hosted_data_plane ? 1 : 0
+  count           = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_alb_target_group" "internal" {
@@ -269,7 +269,7 @@ resource "aws_alb_target_group" "internal" {
     path = "/healthz"
   }
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_alb_listener" "internal_alb_http" {
@@ -282,7 +282,7 @@ resource "aws_alb_listener" "internal_alb_http" {
     type             = "forward"
   }
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 // Extra agent security group rules
@@ -294,7 +294,7 @@ resource "aws_security_group_rule" "agent_egress_redis" {
   security_group_id        = aws_security_group.agent_security_group[0].id
   source_security_group_id = aws_security_group.redis[0].id
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_security_group_rule" "agent_ingress_internal_alb" {
@@ -305,7 +305,7 @@ resource "aws_security_group_rule" "agent_ingress_internal_alb" {
   security_group_id        = aws_security_group.agent_security_group[0].id
   source_security_group_id = aws_security_group.internal_alb[0].id
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
 resource "aws_security_group_rule" "agent_ingress_external_alb" {
@@ -316,10 +316,10 @@ resource "aws_security_group_rule" "agent_ingress_external_alb" {
   security_group_id        = aws_security_group.agent_security_group[0].id
   source_security_group_id = aws_security_group.external_alb[0].id
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
 
-resource "aws_ecs_service" "agent_service_data_plane" {
+resource "aws_ecs_service" "agent_service_self_hosted_storage" {
   name          = "${var.service_name}${local.full_name_suffix}"
   cluster       = var.cluster_arn == "" ? aws_ecs_cluster.cluster[0].arn : var.cluster_arn
   desired_count = var.num_agents
@@ -346,5 +346,5 @@ resource "aws_ecs_service" "agent_service_data_plane" {
   propagate_tags = "SERVICE"
   tags           = var.tags
 
-  count = var.self_hosted_data_plane ? 1 : 0
+  count = var.self_hosted_agent_storage ? 1 : 0
 }
