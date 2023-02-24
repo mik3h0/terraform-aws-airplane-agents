@@ -84,10 +84,16 @@ variable "agent_mem" {
   default     = 512
 }
 
-variable "data_plane_domain" {
+variable "agent_storage_domain" {
   type        = string
   description = "For development purposes."
   default     = "d.airplane.sh"
+}
+
+variable "agent_storage_jwt_public_key" {
+  type        = string
+  description = "For development purposes."
+  default     = "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUF1MGNBdTVmNnFrbWw0MUZxT01hcAo5cmNiZnNwOEJ3MFZVMlRra2pxTDFEOWYrYmF6TEdvcDJSYThWTTcxKzlPamFiNXpnWWZYOTdtWiszUmVUMTNQCkJ5clhRR1BuQ1VoVG9JOEVBdjA2NjJMbG83SzFHYm9TUjF6TjJoMWlNaXAwRFJQSUp0REJNL3QyTUxsSUxxRUMKbTlDdmNkTTg0dXdQc201VDdQV014Z0dYUG9pRnhwR1h5T2w1eCtjOGRaL1lHWU13V3A1eWNnRTVCb1lOK05SaAp0dE94T2NGS0JMbGgvaFNNeWUwaEV5cjlsMVYzVFovQW5xaUxWRlZsYUZ2MmJxbzNacnZUSG5rZHZQaVdkSDMxCmhvWWJJZDRmcHAreWFsNURtZmJqSklPQWFUN2R2UVRqZE9LUzQreW9TdGp2VlY2ZGdxVWtiK1dlcEg3Sk9UWUcKVVNhakRLSkMrQll3K2U5bE5XTldXRU4rc3NvaHBEb3BzaW12MTBKQUI1SFRUU1JBVXFhbzRSRndpVjhiRmFPUQpISFBqUWNBOWlSamluNDN3VDhsVnNNK1hTOFRLZVB6WGF2K3dtWXl1T3dNWTZ6Z0ppU1hZSG5EaDgwTWt0WmlkCkNBQk9BK0I3RWI0dHE1cXlPNzNnNndxTGZIeDVrblYyNjU1N2JZVjdkSUVsSUJiNnVsdnM5L1doV2VnNFhlRVcKdHh3M2gwNC9PWHZ6VlV2c0dVRXdTVmhjbzFyNU1sOWxTMHVrN0U2cG5aRTljSkI2T1VuMHVqSW9KQW91UDhwQwpaTDBNWkRlVys2ZThKV0Fqc043bjFjbUdhRC9jdER2N2E2eHNvbWsyTjVXQzE0U1lLUGVSTndTb05pOE5icENOCjJLZU5zTGlybXlqZEY5c29jVTFqVlQwQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo="
 }
 
 variable "debug_logging" {
@@ -138,8 +144,7 @@ variable "ecr_cache" {
   type        = bool
   description = "Set up a private ecr cache to improve performance and cost of image fetches"
 
-  # TODO: Switch this from false to true after more testing.
-  default = false
+  default = true
 }
 
 variable "env_slug" {
@@ -172,9 +177,9 @@ variable "private_repositories" {
   default     = []
 }
 
-variable "self_hosted_data_plane" {
+variable "self_hosted_agent_storage" {
   type        = bool
-  description = "Enable self-hosted data plane feature (alpha, requires support assistance to use)"
+  description = "Enable self-hosted agent storage feature (alpha, requires support assistance to use)"
   default     = false
 }
 
@@ -222,6 +227,6 @@ variable "vpc_security_group_ids" {
 
 variable "zone_slug" {
   type        = string
-  description = "Zone slug for use with self-hosted data plane"
+  description = "Zone slug for use with self-hosted agent storage"
   default     = "test"
 }

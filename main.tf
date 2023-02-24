@@ -290,19 +290,19 @@ resource "aws_iam_role" "agent_role" {
             Effect   = "Allow"
           },
         ] : [],
-        var.self_hosted_data_plane ? [
+        var.self_hosted_agent_storage ? [
           {
             Action = [
               "s3:ListBucket",
             ]
-            Resource = aws_s3_bucket.data_plane[0].arn
+            Resource = aws_s3_bucket.agent_storage[0].arn
             Effect   = "Allow"
           },
           {
             Action = [
               "s3:*Object",
             ]
-            Resource = "${aws_s3_bucket.data_plane[0].arn}/*"
+            Resource = "${aws_s3_bucket.agent_storage[0].arn}/*"
             Effect   = "Allow"
           },
         ] : [],
@@ -419,15 +419,15 @@ resource "aws_ecs_task_definition" "agent_task_def" {
         { name = "AP_TEAM_ID", value = var.team_id },
         { name = "AP_USE_ECR_PUBLIC_IMAGES", value = tostring(var.use_ecr_public_images) },
 
-        // Self-hosted data plane settings
-        { name = "AP_DATA_PLANE_ENABLED", value = tostring(var.self_hosted_data_plane) },
-        { name = "AP_DATA_PLANE_TEAM_ID", value = var.self_hosted_data_plane ? var.team_id : "" },
-        { name = "AP_DATA_PLANE_ZONE_SLUG", value = var.self_hosted_data_plane ? var.zone_slug : "" },
-        { name = "AP_DATA_PLANE_INTERNAL_HOST", value = var.self_hosted_data_plane ? "http://${aws_alb.internal[0].dns_name}" : "" },
-        { name = "AP_DATA_PLANE_EXTERNAL_URL", value = var.self_hosted_data_plane ? "https://${var.zone_slug}.${var.team_id}.${var.data_plane_domain}" : "" },
-        { name = "AP_DATA_PLANE_JWT_PUBLIC_KEY", value = var.self_hosted_data_plane ? "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUF4T2pDcUxRNzZzWDBKUjhObTVoMAo5QkpYeGswN3lCNCt0Y2x1WDVDaDA5MVR2UlJ0dXJaeGtiSEFmK1lxT3RoTk5EVmtSbHJUUlZUVEY0WnZIMmRWCnJabDJkZmRlLzlSMURwOGZPRFZhemlaNmg0V29md1hlWFZyYVZXZDJkRVN2Qk83eEpPRmltQkxFd2dUOHlpRk4KNkt2VW5wMEhZL0xobUxZY0NPWVVyUWY3WlhhUEF6ckt1NTkxdm1WN254d3hrSDBuQkU3RHRVTVZVYjFRYlFxdQo3NGlQdU5xVy9rL3dtZ2twQU5JbENvc05yb0tGd002c3gvUWs1TW9UUm51UnROL1hOckJIVlBCWlI4Z1BZb1BDCnp1WStaS0xCRGlubW1CWENVVjNXVDRLTFFvZXB4aGtDNlB5ZVVzUHB4Nmw1Ylc0NTFRSUNSMkVLV0FxUkN6NVUKQlo4aWJKRUZnZkcycHE0QllWQ1NQYnZyMTBVdERMSWp4b2sreWFYOXNnc09qclE3YVY1VkNDRVNEQjNpdFdpbAo0WDB2MzJDYzBUNjVaLzF0eThjODNWS0JjUkE0TEtGOUlIYXhiRmE0Z2xCQ2dXTEQ5TkFaZG9wckhFU0xObkIwCjFnNElpcEdHN2lxNFhld2laRkxBN1AzUzBjRTNXenhlcVVkby9NWnFFOVlscjVWZVY2Y0F6dTA0ZW1rdGptaTkKTE5SVEt5Sm1KL1lSWjlOUWlIb3lHUVBOemRpVjlGT1hjVmI2V2NLV0JCcTJBR1ZpUkdmWFMrOWJ5TG5rSVVtSwpwdS94VFlwR20rSXVnTGkyeXV6anduUDRINjJJckFwOUJTODNNMjJxaXg3cVkxNHZxMXJlek52RFhUWFptWEk2CjJTbGt4RGNxLy9reGdJRXVRR1VLdjBzQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo=" : "" },
-        { name = "AP_DATA_PLANE_S3_DATA_PLANE_BUCKET", value = var.self_hosted_data_plane ? aws_s3_bucket.data_plane[0].id : "" },
-        { name = "AP_DATA_PLANE_REDIS_HOST", value = var.self_hosted_data_plane ? "${aws_elasticache_cluster.redis[0].cache_nodes[0].address}:${aws_elasticache_cluster.redis[0].cache_nodes[0].port}" : "" },
+        // Self-hosted agent storage settings
+        { name = "AP_AGENT_STORAGE_ENABLED", value = tostring(var.self_hosted_agent_storage) },
+        { name = "AP_AGENT_STORAGE_TEAM_ID", value = var.self_hosted_agent_storage ? var.team_id : "" },
+        { name = "AP_AGENT_STORAGE_ZONE_SLUG", value = var.self_hosted_agent_storage ? var.zone_slug : "" },
+        { name = "AP_AGENT_STORAGE_INTERNAL_HOST", value = var.self_hosted_agent_storage ? "http://${aws_alb.internal[0].dns_name}" : "" },
+        { name = "AP_AGENT_STORAGE_EXTERNAL_URL", value = var.self_hosted_agent_storage ? "https://${var.zone_slug}.${var.team_id}.${var.agent_storage_domain}" : "" },
+        { name = "AP_AGENT_STORAGE_JWT_PUBLIC_KEY", value = var.self_hosted_agent_storage ? var.agent_storage_jwt_public_key : "" },
+        { name = "AP_AGENT_STORAGE_S3_AGENT_STORAGE_BUCKET", value = var.self_hosted_agent_storage ? aws_s3_bucket.agent_storage[0].id : "" },
+        { name = "AP_AGENT_STORAGE_REDIS_HOST", value = var.self_hosted_agent_storage ? "${aws_elasticache_cluster.redis[0].cache_nodes[0].address}:${aws_elasticache_cluster.redis[0].cache_nodes[0].port}" : "" },
       ]
       portMappings = [
         {
@@ -476,7 +476,7 @@ resource "aws_ecs_service" "agent_service" {
   propagate_tags = "SERVICE"
   tags           = var.tags
 
-  count = var.self_hosted_data_plane ? 0 : 1
+  count = var.self_hosted_agent_storage ? 0 : 1
 }
 
 resource "aws_ecr_repository" "ecr_cache" {

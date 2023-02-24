@@ -50,7 +50,7 @@ module "airplane_agent" {
 | [aws_ecs_cluster.cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster) | resource |
 | [aws_ecs_cluster_capacity_providers.cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster_capacity_providers) | resource |
 | [aws_ecs_service.agent_service](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service) | resource |
-| [aws_ecs_service.agent_service_data_plane](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service) | resource |
+| [aws_ecs_service.agent_service_self_hosted_storage](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service) | resource |
 | [aws_ecs_task_definition.agent_task_def](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
 | [aws_elasticache_cluster.redis](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/elasticache_cluster) | resource |
 | [aws_elasticache_subnet_group.redis](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/elasticache_subnet_group) | resource |
@@ -59,8 +59,8 @@ module "airplane_agent" {
 | [aws_iam_role.agent_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.default_run_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.run_execution_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_s3_bucket.data_plane](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket_public_access_block.data_plane](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_s3_bucket.agent_storage](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket_public_access_block.agent_storage](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_security_group.agent_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group.external_alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group.internal_alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
@@ -97,6 +97,8 @@ module "airplane_agent" {
 | <a name="input_agent_image"></a> [agent\_image](#input\_agent\_image) | URI for airplane agent image | `string` | `"public.ecr.aws/airplanedev-prod/agentv2:1"` | no |
 | <a name="input_agent_labels"></a> [agent\_labels](#input\_agent\_labels) | Map of label key/values to attach to agents. Labels can be used to constrain where tasks execute. | `map(string)` | <pre>{<br>  "ecs": "true"<br>}</pre> | no |
 | <a name="input_agent_mem"></a> [agent\_mem](#input\_agent\_mem) | Memory per agent, in megabytes | `number` | `512` | no |
+| <a name="input_agent_storage_domain"></a> [agent\_storage\_domain](#input\_agent\_storage\_domain) | For development purposes. | `string` | `"d.airplane.sh"` | no |
+| <a name="input_agent_storage_jwt_public_key"></a> [agent\_storage\_jwt\_public\_key](#input\_agent\_storage\_jwt\_public\_key) | For development purposes. | `string` | `"LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUF1MGNBdTVmNnFrbWw0MUZxT01hcAo5cmNiZnNwOEJ3MFZVMlRra2pxTDFEOWYrYmF6TEdvcDJSYThWTTcxKzlPamFiNXpnWWZYOTdtWiszUmVUMTNQCkJ5clhRR1BuQ1VoVG9JOEVBdjA2NjJMbG83SzFHYm9TUjF6TjJoMWlNaXAwRFJQSUp0REJNL3QyTUxsSUxxRUMKbTlDdmNkTTg0dXdQc201VDdQV014Z0dYUG9pRnhwR1h5T2w1eCtjOGRaL1lHWU13V3A1eWNnRTVCb1lOK05SaAp0dE94T2NGS0JMbGgvaFNNeWUwaEV5cjlsMVYzVFovQW5xaUxWRlZsYUZ2MmJxbzNacnZUSG5rZHZQaVdkSDMxCmhvWWJJZDRmcHAreWFsNURtZmJqSklPQWFUN2R2UVRqZE9LUzQreW9TdGp2VlY2ZGdxVWtiK1dlcEg3Sk9UWUcKVVNhakRLSkMrQll3K2U5bE5XTldXRU4rc3NvaHBEb3BzaW12MTBKQUI1SFRUU1JBVXFhbzRSRndpVjhiRmFPUQpISFBqUWNBOWlSamluNDN3VDhsVnNNK1hTOFRLZVB6WGF2K3dtWXl1T3dNWTZ6Z0ppU1hZSG5EaDgwTWt0WmlkCkNBQk9BK0I3RWI0dHE1cXlPNzNnNndxTGZIeDVrblYyNjU1N2JZVjdkSUVsSUJiNnVsdnM5L1doV2VnNFhlRVcKdHh3M2gwNC9PWHZ6VlV2c0dVRXdTVmhjbzFyNU1sOWxTMHVrN0U2cG5aRTljSkI2T1VuMHVqSW9KQW91UDhwQwpaTDBNWkRlVys2ZThKV0Fqc043bjFjbUdhRC9jdER2N2E2eHNvbWsyTjVXQzE0U1lLUGVSTndTb05pOE5icENOCjJLZU5zTGlybXlqZEY5c29jVTFqVlQwQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo="` | no |
 | <a name="input_allowed_iam_roles"></a> [allowed\_iam\_roles](#input\_allowed\_iam\_roles) | List of additional allowed IAM roles that tasks are allowed to assume | `list(string)` | `[]` | no |
 | <a name="input_api_host"></a> [api\_host](#input\_api\_host) | For development purposes. | `string` | `"https://api.airplane.dev"` | no |
 | <a name="input_api_token"></a> [api\_token](#input\_api\_token) | Airplane API key - generate one via `airplane apikeys create`. Either this or API Token Secret must be set | `string` | `""` | no |
@@ -105,24 +107,23 @@ module "airplane_agent" {
 | <a name="input_assign_public_agent_ip"></a> [assign\_public\_agent\_ip](#input\_assign\_public\_agent\_ip) | If enabled, assigns a public IP address to the agent service. If disabled, the subnet used by the agent must be configured with a NAT gateway to enable internet access. | `bool` | `true` | no |
 | <a name="input_cluster_arn"></a> [cluster\_arn](#input\_cluster\_arn) | Your ECS cluster ARN. Leave blank to create a new cluster. | `string` | `""` | no |
 | <a name="input_cpu_architecture"></a> [cpu\_architecture](#input\_cpu\_architecture) | CPU architecture for agent and tasks. Note: ARM support is experimental- contact support for more details. | `string` | `"X86_64"` | no |
-| <a name="input_data_plane_domain"></a> [data\_plane\_domain](#input\_data\_plane\_domain) | For development purposes. | `string` | `"d.airplane.sh"` | no |
 | <a name="input_debug_logging"></a> [debug\_logging](#input\_debug\_logging) | Enable debug logging in the agent and runners | `bool` | `false` | no |
 | <a name="input_default_task_cpu"></a> [default\_task\_cpu](#input\_default\_task\_cpu) | Default CPU for tasks, in millicores (e.g. 500m or 1000m) | `string` | `"1000m"` | no |
 | <a name="input_default_task_memory"></a> [default\_task\_memory](#input\_default\_task\_memory) | Default memory for tasks (e.g. 500Mi or 2Gi) | `string` | `"1Gi"` | no |
-| <a name="input_ecr_cache"></a> [ecr\_cache](#input\_ecr\_cache) | Set up a private ecr cache to improve performance and cost of image fetches | `bool` | `false` | no |
+| <a name="input_ecr_cache"></a> [ecr\_cache](#input\_ecr\_cache) | Set up a private ecr cache to improve performance and cost of image fetches | `bool` | `true` | no |
 | <a name="input_env_slug"></a> [env\_slug](#input\_env\_slug) | Slug for environment. Leave blank to let agent execute on all environments. | `string` | `""` | no |
 | <a name="input_gcp_project_id"></a> [gcp\_project\_id](#input\_gcp\_project\_id) | Project for Airplane resources; do not change this. | `string` | `"airplane-prod"` | no |
 | <a name="input_name_suffix"></a> [name\_suffix](#input\_name\_suffix) | A custom suffix to add to all generated names; a dash is automatically added, so there is no need to include that if set. | `string` | `""` | no |
 | <a name="input_num_agents"></a> [num\_agents](#input\_num\_agents) | Number of agent instances to run | `number` | `3` | no |
 | <a name="input_private_repositories"></a> [private\_repositories](#input\_private\_repositories) | List of private repositories for Docker image tasks | `list(string)` | `[]` | no |
-| <a name="input_self_hosted_data_plane"></a> [self\_hosted\_data\_plane](#input\_self\_hosted\_data\_plane) | Enable self-hosted data plane feature (alpha, requires support assistance to use) | `bool` | `false` | no |
+| <a name="input_self_hosted_agent_storage"></a> [self\_hosted\_agent\_storage](#input\_self\_hosted\_agent\_storage) | Enable self-hosted agent storage feature (alpha, requires support assistance to use) | `bool` | `false` | no |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Name to assign to ECS service | `string` | `"airplane-agent"` | no |
 | <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | List of subnet IDs for ECS service. All subnets must be from the same VPC. | `list(string)` | `[]` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | AWS tags to attach to resources | `map(string)` | `{}` | no |
 | <a name="input_temporal_host"></a> [temporal\_host](#input\_temporal\_host) | For development purposes. | `string` | `"temporal-api.airplane.dev:443"` | no |
 | <a name="input_use_ecr_public_images"></a> [use\_ecr\_public\_images](#input\_use\_ecr\_public\_images) | Use ECR-based public images for task runs | `bool` | `true` | no |
 | <a name="input_vpc_security_group_ids"></a> [vpc\_security\_group\_ids](#input\_vpc\_security\_group\_ids) | List of security group IDs to use. If not set, a new security group is created for the VPC containing the provided subnets. | `list(string)` | `[]` | no |
-| <a name="input_zone_slug"></a> [zone\_slug](#input\_zone\_slug) | Zone slug for use with self-hosted data plane | `string` | `"test"` | no |
+| <a name="input_zone_slug"></a> [zone\_slug](#input\_zone\_slug) | Zone slug for use with self-hosted agent storage | `string` | `"test"` | no |
 
 ## Outputs
 
